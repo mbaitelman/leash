@@ -83,7 +83,7 @@ cp .env.example .env
 
 ```bash
 # Docker
-docker run --rm --env-file .env -v $(pwd)/policies:/policies:ro leash:latest run
+docker run --rm --env-file .env -v $(pwd)/policies:/policies:ro ghcr.io/mbaitelman/leash:latest run
 
 # Direct binary
 source .env && ./leash run --policy ./policies/
@@ -129,7 +129,7 @@ jobs:
           docker run --rm \
             -e DD_API_KEY -e DD_APP_KEY -e DD_SITE \
             -v ${{ github.workspace }}/policies:/policies:ro \
-            leash:latest run --policy /policies/ --output-file findings.json
+            ghcr.io/mbaitelman/leash:latest run --policy /policies/ --output-file findings.json
 
       - name: Upload findings
         uses: actions/upload-artifact@v4
@@ -159,7 +159,7 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/policies:/policies:ro \
-            leash:latest validate --policy /policies/
+            ghcr.io/mbaitelman/leash:latest validate --policy /policies/
 ```
 
 `leash validate` does not call the Datadog API and requires no credentials.
@@ -190,7 +190,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: leash
-              image: leash:latest
+              image: ghcr.io/mbaitelman/leash:latest
               args: ["run", "--policy", "/policies/"]
               envFrom:
                 - secretRef:

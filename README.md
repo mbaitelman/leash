@@ -42,6 +42,9 @@ By default every run is a **dry run** — mutating actions (tag, delete) are log
 ### Docker (recommended)
 
 ```bash
+# Pull the image
+docker pull ghcr.io/mbaitelman/leash:latest
+
 # Copy and fill in your credentials
 cp .env.example .env
 
@@ -49,13 +52,13 @@ cp .env.example .env
 docker run --rm \
   --env-file .env \
   -v $(pwd)/policies:/policies:ro \
-  leash:latest validate --policy /policies/
+  ghcr.io/mbaitelman/leash:latest validate --policy /policies/
 
 # Run in dry-run mode (default)
 docker run --rm \
   --env-file .env \
   -v $(pwd)/policies:/policies:ro \
-  leash:latest run --policy /policies/
+  ghcr.io/mbaitelman/leash:latest run --policy /policies/
 ```
 
 ### Build from source
