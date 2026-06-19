@@ -3,7 +3,7 @@ module github.com/mbaitelman/leash
 go 1.26
 
 require (
-	github.com/DataDog/datadog-api-client-go/v2 v2.32.0
+	github.com/DataDog/datadog-api-client-go/v2 v2.61.0
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.8.1
