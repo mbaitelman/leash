@@ -62,7 +62,7 @@ func sloLinkedMonitorIDs(ctx context.Context, client *datadog.APIClient) map[int
 // ---- Resource ----
 
 type syntheticResource struct {
-	inner          datadogV1.SyntheticsTestDetails
+	inner          datadogV1.SyntheticsTestDetailsWithoutSteps
 	client         *datadog.APIClient
 	linkedMonitors map[int64]struct{}
 }
