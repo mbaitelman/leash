@@ -82,6 +82,7 @@ Leash reads credentials from environment variables:
 | `DD_APP_KEY` | Yes | Datadog Application key |
 | `DD_SITE` | No | Datadog site (default: `datadoghq.com`) |
 | `SLACK_WEBHOOK_URL` | No | Fallback Slack webhook for `notify` actions |
+| `LEASH_SCHEDULE` | No | Cron expression for automatic runs in `serve` mode (e.g. `0 * * * *`) |
 
 See [docs/auth.md](docs/auth.md) for key creation, regional sites, and secrets management.
 
@@ -253,6 +254,29 @@ Print the JSON Schema for policy YAML files to stdout. Pipe to a file for editor
 ```bash
 leash schema > policy-schema.json
 ```
+
+### `leash serve`
+
+Start the web UI on localhost. Optionally runs policies on a cron schedule automatically.
+
+```bash
+leash serve
+leash serve --port 9090
+leash serve --schedule "0 * * * *"          # trigger a run every hour
+leash serve --schedule "*/30 * * * *"       # every 30 minutes
+LEASH_SCHEDULE="0 6 * * *" leash serve     # daily at 06:00 via env var
+```
+
+Additional flags:
+```
+--port string       Port to listen on (default "8080")
+--runs-dir string   Directory for storing run results (default "./runs")
+--schedule string   Cron expression for automatic runs (overrides LEASH_SCHEDULE env var)
+```
+
+**Schedule precedence:** `--schedule` flag → `LEASH_SCHEDULE` env var → no automatic runs.
+
+The schedule uses standard 5-field cron syntax: `minute hour day month weekday`. An invalid expression is rejected at startup before the server begins accepting connections. Each scheduled run uses the same dry-run setting as the server (`--dry-run`, default `true`) and saves its findings to `--runs-dir` like any manual run.
 
 ---
 

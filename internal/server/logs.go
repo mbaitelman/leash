@@ -190,7 +190,8 @@ func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		site = "datadoghq.com"
 	}
 	writeJSON(w, map[string]string{
-		"app_url": "https://app." + site,
-		"site":    site,
+		"app_url":  "https://app." + site,
+		"site":     site,
+		"schedule": s.schedule,
 	})
 }
