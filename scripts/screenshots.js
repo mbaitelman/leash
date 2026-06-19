@@ -156,7 +156,7 @@ fs.mkdirSync(OUT, { recursive: true });
       if (dark) await page.addInitScript(() => localStorage.setItem('leash-theme', 'dark'));
       await page.goto('http://localhost:3001/' + hash);
       await page.waitForSelector(wait, { timeout: 8000 }).catch(() => {});
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(800);
       const file = path.join(OUT, name + (dark ? '-dark' : '-light') + '.png');
       await page.screenshot({ path: file });
       console.log('saved', path.basename(file));

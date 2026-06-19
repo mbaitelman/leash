@@ -518,14 +518,13 @@ function esc(s) {
 }
 
 function skeletonRows(n, cols) {
-  const widths = [['60%','30%','40%','20%','15%'], ['70%','25%','35%'], ['50%','40%','30%','20%']];
-  const w = widths[cols % widths.length];
-  return Array.from({length:n}, (_, i) =>
-    '<div class="sk-row">' +
-      w.slice(0, cols).map(ww =>
-        '<div class="sk" style="height:14px;width:' + ww + ';flex:' + (ww === '60%' || ww === '70%' ? '2' : '1') + '"></div>'
+  const allWidths = ['55%','35%','25%','20%','15%'];
+  return Array.from({length:n}, () =>
+    '<tr>' +
+      allWidths.slice(0, cols).map(w =>
+        '<td><div class="sk" style="height:13px;width:' + w + ';border-radius:4px"></div></td>'
       ).join('') +
-    '</div>'
+    '</tr>'
   ).join('');
 }
 
