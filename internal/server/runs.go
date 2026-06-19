@@ -132,6 +132,31 @@ func (s *Server) handleRunByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, run)
 }
 
+// executeRun loads policies from the given paths (or s.policyDirs if empty),
+// runs the engine, saves the report, and returns it. Used by both the HTTP
+// handler and the scheduled runner.
+func (s *Server) executeRun(policyPaths []string, dryRun bool) (*output.FindingsReport, error) {
+	policies, err := policy.LoadPaths(policyPaths)
+	if err != nil {
+		return nil, fmt.Errorf("loading policies: %w", err)
+	}
+
+	client, ctx, err := config.BuildClient()
+	if err != nil {
+		return nil, fmt.Errorf("Datadog credentials not configured: %w", err)
+	}
+
+	report, err := engine.New(ctx, client).Run(policies, dryRun)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.store.Save(report); err != nil {
+		slog.Warn("failed to save run", "error", err)
+	}
+	return report, nil
+}
+
 func (s *Server) triggerRun(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		DryRun     bool   `json:"dry_run"`
@@ -150,27 +175,16 @@ func (s *Server) triggerRun(w http.ResponseWriter, r *http.Request) {
 		paths = []string{abs}
 	}
 
-	policies, err := policy.LoadPaths(paths)
+	report, err := s.executeRun(paths, req.DryRun)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "loading policies: "+err.Error())
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "credentials") {
+			status = http.StatusServiceUnavailable
+		} else if strings.Contains(err.Error(), "loading policies") {
+			status = http.StatusBadRequest
+		}
+		writeError(w, status, err.Error())
 		return
-	}
-
-	client, ctx, err := config.BuildClient()
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "Datadog credentials not configured: "+err.Error())
-		return
-	}
-
-	eng := engine.New(ctx, client)
-	report, err := eng.Run(policies, req.DryRun)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err := s.store.Save(report); err != nil {
-		slog.Warn("failed to save run", "error", err)
 	}
 
 	w.WriteHeader(http.StatusCreated)

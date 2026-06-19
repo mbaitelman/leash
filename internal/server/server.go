@@ -12,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mbaitelman/leash/internal/output"
+	"github.com/robfig/cron/v3"
 )
 
 //go:embed web
@@ -22,17 +25,19 @@ type Server struct {
 	port       string
 	dryRun     bool
 	policyDirs []string
+	schedule   string // cron expression, empty = no scheduled runs
 	store      *RunStore
 	policies   *PolicyStore
 	logBuf     *LogBuffer
 	logLevel   slog.LevelVar // adjustable at runtime via PUT /api/log-level
 }
 
-func New(port, runsDir string, policyDirs []string, dryRun bool) *Server {
+func New(port, runsDir string, policyDirs []string, dryRun bool, schedule string) *Server {
 	return &Server{
 		port:       port,
 		dryRun:     dryRun,
 		policyDirs: policyDirs,
+		schedule:   schedule,
 		store:      NewRunStore(runsDir),
 		policies:   NewPolicyStore(policyDirs),
 		logBuf:     newLogBuffer(),
@@ -88,6 +93,24 @@ func (s *Server) httpLogger(next http.Handler) http.Handler {
 }
 
 func (s *Server) Start(ctx context.Context) error {
+	if s.schedule != "" {
+		c := cron.New()
+		if _, err := c.AddFunc(s.schedule, func() {
+			slog.Info("scheduled run starting", "schedule", s.schedule)
+			report, err := s.executeRun(s.policyDirs, s.dryRun)
+			if err != nil {
+				slog.Error("scheduled run failed", "error", err)
+				return
+			}
+			slog.Info("scheduled run complete", "run_id", report.RunID, "matches", totalMatches(report))
+		}); err != nil {
+			return fmt.Errorf("invalid cron schedule %q: %w", s.schedule, err)
+		}
+		c.Start()
+		defer c.Stop()
+		slog.Info("scheduled runs enabled", "schedule", s.schedule)
+	}
+
 	mux := http.NewServeMux()
 
 	// API routes — order matters: specific prefix before generic
@@ -123,6 +146,14 @@ func (s *Server) Start(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func totalMatches(r *output.FindingsReport) int {
+	n := 0
+	for _, p := range r.Policies {
+		n += p.MatchCount
+	}
+	return n
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
