@@ -16,257 +16,351 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --sb:   #14142b;
-      --bg:   #f1f4f9;
-      --sur:  #ffffff;
-      --bd:   #e2e8ef;
-      --tx:   #1a1a2e;
-      --mu:   #6b7280;
-      --ac:   #7b42bc;
-      --ach:  #6433a4;
-      --ok:   #059669;
-      --er:   #dc2626;
-      --wn:   #d97706;
-      --car:  #f8fafc;
-      --car-h:#f0f4f8;
-      --hov:  #fafbfc;
-      --log-bg:   #f6f8fa;
-      --log-tx:   #24292f;
-      --log-mu:   #57606a;
-      --log-time: #6b7280;
-      --log-dbg:  #6b7280;
-      --log-info: #0550ae;
-      --log-warn: #953800;
-      --log-err:  #cf222e;
-      --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      --mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      --sb:    #0f172a;
+      --sb-bd: rgba(255,255,255,.06);
+      --bg:    #f5f7fa;
+      --sur:   #ffffff;
+      --bd:    #e2e8f0;
+      --bd2:   #f1f5f9;
+      --tx:    #0f172a;
+      --mu:    #64748b;
+      --mu2:   #94a3b8;
+      --ac:    #7c3aed;
+      --ach:   #6d28d9;
+      --ac-lo: rgba(124,58,237,.1);
+      --ac-bg: #f5f3ff;
+      --ok:    #059669;
+      --ok-bg: #ecfdf5;
+      --ok-bd: #a7f3d0;
+      --er:    #dc2626;
+      --er-bg: #fef2f2;
+      --er-bd: #fecaca;
+      --wn:    #d97706;
+      --wn-bg: #fffbeb;
+      --car:   #f8fafc;
+      --car-h: #f1f5f9;
+      --hov:   rgba(0,0,0,.02);
+      --shad:  0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shad2: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+      --log-bg:   #f8fafc;
+      --log-tx:   #1e293b;
+      --log-mu:   #64748b;
+      --log-time: #94a3b8;
+      --log-dbg:  #94a3b8;
+      --log-info: #2563eb;
+      --log-warn: #b45309;
+      --log-err:  #dc2626;
+      --font: system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+      --mono: ui-monospace,'Cascadia Code','Fira Code',Consolas,monospace;
+      --r: 8px; --r-sm: 6px;
     }
-    html, body { height: 100%; }
-    body { font-family: var(--font); background: var(--bg); color: var(--tx); font-size: 14px; line-height: 1.5; }
-    a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; }
+    html,body { height:100%; }
+    body { font-family:var(--font); background:var(--bg); color:var(--tx); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    button { font-family:inherit; }
 
-    /* Layout */
-    .app { display: flex; height: 100vh; }
-    .sidebar { width: 200px; flex-shrink: 0; background: var(--sb); display: flex; flex-direction: column; }
-    .main { flex: 1; overflow-y: auto; background: var(--bg); }
-    .page { padding: 28px 32px; max-width: 960px; }
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .app { display:flex; height:100vh; }
+    .sidebar { width:220px; flex-shrink:0; background:var(--sb); display:flex; flex-direction:column; border-right:1px solid rgba(255,255,255,.04); }
+    .main { flex:1; overflow-y:auto; background:var(--bg); }
+    .page { padding:32px 36px; max-width:1000px; }
 
-    /* Sidebar */
-    .brand { padding: 14px 14px 12px; font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px; }
-    .brand-logo { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: block; }
-    .nav-section { padding: 6px 8px; flex: 1; }
-    .nav-link { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 6px; color: rgba(255,255,255,0.55); font-size: 13.5px; cursor: pointer; transition: background .12s, color .12s; user-select: none; }
-    .nav-link:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
-    .nav-link.active { background: rgba(123,66,188,0.22); color: #fff; }
-    .nav-link svg { opacity: .8; flex-shrink: 0; }
-    .nav-link.active svg { opacity: 1; }
+    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    .brand { padding:18px 14px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--sb-bd); }
+    .brand-logo { width:30px; height:30px; border-radius:7px; flex-shrink:0; }
+    .brand-text { font-size:16px; font-weight:700; color:#fff; letter-spacing:-.3px; }
 
-    /* Page header */
-    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
-    .page-title { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-    .btn-row { display: flex; align-items: center; gap: 8px; }
+    .nav-section { padding:10px 8px; flex:1; display:flex; flex-direction:column; gap:2px; }
+    .nav-link { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:var(--r-sm); color:rgba(255,255,255,.48); font-size:13.5px; cursor:pointer; transition:background .1s,color .1s; user-select:none; position:relative; }
+    .nav-link:hover { background:rgba(255,255,255,.06); color:rgba(255,255,255,.82); }
+    .nav-link.active { background:rgba(124,58,237,.18); color:#fff; }
+    .nav-link.active::before { content:''; position:absolute; left:0; top:5px; bottom:5px; width:3px; border-radius:0 2px 2px 0; background:var(--ac); }
+    .nav-link svg { opacity:.7; flex-shrink:0; }
+    .nav-link.active svg { opacity:1; }
+    .nav-badge { margin-left:auto; background:rgba(220,38,38,.85); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:10px; line-height:1.5; }
+    .nav-divider { height:1px; background:var(--sb-bd); margin:6px 8px; }
 
-    /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: background .12s, opacity .12s; line-height: 1; white-space: nowrap; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary { background: var(--ac); color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: var(--ach); }
-    .btn-ghost { background: transparent; color: var(--mu); border: 1px solid var(--bd); }
-    .btn-ghost:hover:not(:disabled) { background: var(--sur); color: var(--tx); }
-    .btn-sm { padding: 4px 10px; font-size: 12px; }
-    .dry-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mu); cursor: pointer; }
-    .dry-check input { accent-color: var(--ac); cursor: pointer; }
+    .sidebar-footer { padding:8px 8px 12px; border-top:1px solid var(--sb-bd); display:flex; flex-direction:column; gap:2px; }
+    .sidebar-schedule { padding:5px 10px; font-size:11.5px; color:rgba(255,255,255,.32); display:flex; align-items:center; gap:6px; }
+    .sidebar-schedule svg { flex-shrink:0; }
+    .theme-btn { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:var(--r-sm); border:none; background:transparent; color:rgba(255,255,255,.38); cursor:pointer; transition:background .1s,color .1s; }
+    .theme-btn:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.75); }
 
-    /* Back link */
-    .back-link { display: inline-flex; align-items: center; gap: 5px; color: var(--mu); font-size: 13px; margin-bottom: 14px; cursor: pointer; transition: color .12s; }
-    .back-link:hover { color: var(--tx); }
+    /* ── Page header ─────────────────────────────────────────────────────── */
+    .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .page-title { font-size:20px; font-weight:700; letter-spacing:-.4px; }
+    .page-sub { font-size:13px; color:var(--mu); margin-top:3px; }
+    .btn-row { display:flex; align-items:center; gap:8px; }
 
-    /* Card */
-    .card { background: var(--sur); border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; }
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--r-sm); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:background .12s,box-shadow .12s,opacity .12s; line-height:1; white-space:nowrap; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn-primary { background:var(--ac); color:#fff; box-shadow:0 1px 2px rgba(0,0,0,.15); }
+    .btn-primary:hover:not(:disabled) { background:var(--ach); box-shadow:0 2px 8px rgba(124,58,237,.4); }
+    .btn-ghost { background:var(--sur); color:var(--tx); border:1px solid var(--bd); box-shadow:var(--shad); }
+    .btn-ghost:hover:not(:disabled) { background:var(--car); border-color:var(--mu2); }
+    .btn-sm  { padding:5px 10px; font-size:12px; }
+    .btn-xs  { padding:3px 8px; font-size:11px; }
+    .dry-check { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--mu); cursor:pointer; }
+    .dry-check input { accent-color:var(--ac); cursor:pointer; }
 
-    /* Table */
-    .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-    .table th { text-align: left; padding: 9px 16px; font-size: 11px; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--bd); white-space: nowrap; }
-    .table td { padding: 11px 16px; border-bottom: 1px solid var(--bd); vertical-align: middle; }
-    .table tbody tr:last-child td { border-bottom: none; }
-    .table tbody tr.clickable { cursor: pointer; }
-    .table tbody tr.clickable:hover td { background: var(--hov); }
+    /* ── Back link ───────────────────────────────────────────────────────── */
+    .back-link { display:inline-flex; align-items:center; gap:5px; color:var(--mu); font-size:13px; margin-bottom:16px; cursor:pointer; transition:color .1s; }
+    .back-link:hover { color:var(--tx); }
 
-    /* Badges */
-    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-    .badge-live { background: #dcfce7; color: #15803d; }
-    .badge-dry  { background: #ede9fe; color: #5b21b6; }
-    .badge-ok   { background: #dcfce7; color: #15803d; }
-    .badge-err  { background: #fee2e2; color: #b91c1c; }
-    .badge-neu  { background: #f3f4f6; color: #374151; }
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card { background:var(--sur); border:1px solid var(--bd); border-radius:var(--r); box-shadow:var(--shad); overflow:hidden; }
 
-    /* Run meta row */
-    .run-meta { display: flex; gap: 28px; margin-bottom: 22px; flex-wrap: wrap; }
-    .meta-item { display: flex; flex-direction: column; gap: 2px; }
-    .meta-label { font-size: 10.5px; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .06em; }
-    .meta-value { font-size: 15px; font-weight: 600; }
+    /* ── Stat grid (overview) ────────────────────────────────────────────── */
+    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--sur); border:1px solid var(--bd); border-radius:var(--r); box-shadow:var(--shad); padding:18px 20px; }
+    .stat-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+    .si-ac  { background:var(--ac-bg); color:var(--ac); }
+    .si-ok  { background:var(--ok-bg); color:var(--ok); }
+    .si-er  { background:var(--er-bg); color:var(--er); }
+    .si-neu { background:var(--car); color:var(--mu); }
+    .stat-label { font-size:11.5px; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+    .stat-value { font-size:26px; font-weight:700; letter-spacing:-.5px; line-height:1; }
+    .stat-sub   { font-size:12px; color:var(--mu); margin-top:6px; }
 
-    /* Section labels */
-    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
-    .sl-err { color: var(--er); }
-    .sl-ok  { color: var(--ok); }
-    .mt12 { margin-top: 12px; }
-    .mt20 { margin-top: 20px; }
+    /* ── Table ───────────────────────────────────────────────────────────── */
+    .table { width:100%; border-collapse:collapse; font-size:13.5px; }
+    .table th { text-align:left; padding:10px 16px; font-size:11px; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--bd); white-space:nowrap; background:var(--car); }
+    .table td { padding:12px 16px; border-bottom:1px solid var(--bd); vertical-align:middle; }
+    .table tbody tr:last-child td { border-bottom:none; }
+    .table tbody tr.clickable { cursor:pointer; }
+    .table tbody tr.clickable:hover td { background:var(--hov); }
 
-    /* Match cards */
-    .match-card { margin: 8px 16px 12px; background: var(--car); border: 1px solid var(--bd); border-radius: 6px; overflow: hidden; }
-    .match-card.passing { border-left: 3px solid var(--ok); }
-    .match-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--car-h); border-bottom: 1px solid var(--bd); }
-    .match-name { font-weight: 600; font-size: 13.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .match-id { font-family: var(--mono); font-size: 11px; color: var(--mu); }
-    .dd-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--ac); white-space: nowrap; flex-shrink: 0; }
-    .dd-link:hover { text-decoration: underline; }
-    .match-body { padding: 10px 14px; }
-    .props-table { font-size: 12px; border-collapse: collapse; width: 100%; margin-bottom: 6px; }
-    .props-table td { padding: 2px 8px 2px 0; vertical-align: top; }
-    .props-table td:first-child { font-family: var(--mono); color: var(--mu); width: 130px; }
-    .props-table td:last-child  { font-family: var(--mono); word-break: break-all; }
-    .action-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+    /* ── Badges ──────────────────────────────────────────────────────────── */
+    .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
+    .badge-live { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .badge-dry  { background:#ede9fe; color:#5b21b6; border:1px solid #ddd6fe; }
+    .badge-ok   { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .badge-err  { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
+    .badge-neu  { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
 
-    /* Match count bubble */
-    .match-bubble { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-    .bubble-0   { background: #f3f4f6; color: var(--mu); }
-    .bubble-pos { background: #fee2e2; color: var(--er); }
+    /* ── Run meta strip ──────────────────────────────────────────────────── */
+    .run-meta { display:flex; background:var(--sur); border:1px solid var(--bd); border-radius:var(--r); box-shadow:var(--shad); overflow:hidden; margin-bottom:24px; }
+    .meta-item { flex:1; padding:16px 20px; border-right:1px solid var(--bd); }
+    .meta-item:last-child { border-right:none; }
+    .meta-label { font-size:11px; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+    .meta-value { font-size:16px; font-weight:700; }
 
-    /* Policy editor */
-    .editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-    .editor-filename { font-size: 18px; font-weight: 700; }
-    .save-status { font-size: 12px; color: var(--mu); }
-    .save-status.dirty { color: var(--wn); }
-    .save-status.saved { color: var(--ok); }
-    /* CodeMirror container */
-    .cm-wrap { border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; transition: border-color .12s, box-shadow .12s; }
-    .cm-wrap.focused { border-color: var(--ac); box-shadow: 0 0 0 3px rgba(123,66,188,.1); }
-    .cm-wrap .CodeMirror { height: calc(100vh - 210px); font-family: var(--mono); font-size: 13px; line-height: 1.65; border-radius: 8px; background: var(--sur); color: var(--tx); }
-    .cm-wrap .CodeMirror-scroll { border-radius: 8px; }
-    [data-theme="dark"] .cm-wrap .CodeMirror { background: #282a36; color: #f8f8f2; }
+    /* ── Section headers ─────────────────────────────────────────────────── */
+    .section-hdr { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .sh-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .sh-dot-er { background:var(--er); }
+    .sh-dot-ok { background:var(--ok); }
+    .sh-title  { font-size:13px; font-weight:700; }
+    .sh-count  { margin-left:auto; font-size:11px; font-weight:600; color:var(--mu); background:var(--car); border:1px solid var(--bd); padding:1px 7px; border-radius:10px; }
+    .mt16 { margin-top:16px; }
+    .mt24 { margin-top:24px; }
 
-    /* Server log-level selector */
-    .level-sel { padding: 4px 8px; border: 1px solid var(--bd); border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--tx); background: var(--sur); cursor: pointer; outline: none; font-family: var(--font); }
-    .level-sel:focus { border-color: var(--ac); }
-    .level-sel-label { font-size: 12px; color: var(--mu); white-space: nowrap; }
+    /* ── Match cards ─────────────────────────────────────────────────────── */
+    .match-card { margin:0 12px 10px; background:var(--sur); border:1px solid var(--bd); border-radius:var(--r-sm); overflow:hidden; }
+    .match-card.violation { border-left:3px solid var(--er); }
+    .match-card.passing   { border-left:3px solid var(--ok); }
+    .match-header { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--car); border-bottom:1px solid var(--bd); }
+    .match-name { font-weight:600; font-size:13.5px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .match-id { font-family:var(--mono); font-size:11px; color:var(--mu); }
+    .dd-link { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:500; color:var(--ac); white-space:nowrap; flex-shrink:0; padding:4px 8px; border-radius:var(--r-sm); transition:background .1s; }
+    .dd-link:hover { background:var(--ac-bg); }
+    .match-body { padding:10px 14px; }
+    .props-table { font-size:12px; border-collapse:collapse; width:100%; margin-bottom:6px; }
+    .props-table td { padding:2px 8px 2px 0; vertical-align:top; }
+    .props-table td:first-child { font-family:var(--mono); color:var(--mu); width:140px; white-space:nowrap; }
+    .props-table td:last-child  { font-family:var(--mono); word-break:break-all; }
+    .action-badges { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; padding-top:8px; border-top:1px solid var(--bd2); }
 
-    /* Logs */
-    .log-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-    .lvl-btn { padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: opacity .12s; }
-    .lvl-btn.off { opacity: .35; }
-    .lvl-DEBUG { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
-    .lvl-INFO  { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
-    .lvl-WARN  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-    .lvl-ERROR { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .log-box { font-family: var(--mono); font-size: 12px; background: var(--log-bg); color: var(--log-tx); border-radius: 8px; padding: 12px 16px; overflow-y: auto; height: calc(100vh - 218px); }
-    .log-entry { display: flex; gap: 12px; padding: 1.5px 0; line-height: 1.5; }
-    .log-entry:hover { background: rgba(128,128,128,.08); border-radius: 3px; }
-    .l-time  { color: var(--log-time); min-width: 88px; flex-shrink: 0; }
-    .l-level { min-width: 48px; font-weight: 700; flex-shrink: 0; }
-    .l-INFO  { color: var(--log-info); }
-    .l-WARN  { color: var(--log-warn); }
-    .l-ERROR { color: var(--log-err); }
-    .l-DEBUG { color: var(--log-dbg); }
-    .l-msg   { flex: 1; color: var(--log-tx); }
-    .l-attrs { color: var(--log-mu); }
+    /* Tag chips */
+    .tag-list { display:flex; flex-wrap:wrap; gap:4px; }
+    .tag-chip { display:inline-flex; align-items:center; padding:2px 7px; border-radius:4px; font-family:var(--mono); font-size:11px; background:var(--ac-bg); color:var(--ac); border:1px solid rgba(124,58,237,.15); white-space:nowrap; }
 
-    /* Dark mode */
+    /* Match bubble */
+    .match-bubble { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 5px; border-radius:11px; font-size:11px; font-weight:700; flex-shrink:0; }
+    .bubble-0   { background:var(--car); color:var(--mu); border:1px solid var(--bd); }
+    .bubble-pos { background:var(--er-bg); color:var(--er); border:1px solid var(--er-bd); }
+
+    /* Policy rows (collapsible) */
+    .pol-row { border-bottom:1px solid var(--bd); }
+    .pol-row:last-child { border-bottom:none; }
+    .pol-row-hdr { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; transition:background .1s; user-select:none; }
+    .pol-row-hdr:hover { background:var(--hov); }
+    .pol-chevron { transition:transform .15s; color:var(--mu2); flex-shrink:0; }
+    .pol-chevron.open { transform:rotate(90deg); }
+    .pol-row-name { font-weight:600; font-size:13.5px; flex:1; }
+    .pol-row-type { font-size:12px; color:var(--mu); }
+    .pol-row-body { border-top:1px solid var(--bd2); padding:4px 0 8px; display:none; }
+    .pol-row-body.open { display:block; }
+    .pass-toggle-wrap { padding:6px 16px 4px; }
+
+    /* ── Policy editor ───────────────────────────────────────────────────── */
+    .editor-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+    .editor-filename { font-size:17px; font-weight:700; }
+    .save-status { font-size:12px; color:var(--mu); transition:color .2s; }
+    .save-status.dirty { color:var(--wn); }
+    .save-status.saved { color:var(--ok); }
+    .cm-wrap { border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; transition:border-color .12s,box-shadow .12s; box-shadow:var(--shad); }
+    .cm-wrap.focused { border-color:var(--ac); box-shadow:0 0 0 3px rgba(124,58,237,.12); }
+    .cm-wrap .CodeMirror { height:calc(100vh - 196px); font-family:var(--mono); font-size:13px; line-height:1.65; background:var(--sur); color:var(--tx); }
+    .cm-wrap .CodeMirror-scroll { border-radius:var(--r); }
+    [data-theme="dark"] .cm-wrap .CodeMirror { background:#1e1e2e; color:#cdd6f4; }
+    .kbd { font-family:var(--mono); font-size:10px; color:var(--mu); background:var(--car); border:1px solid var(--bd); border-radius:3px; padding:1px 4px; }
+
+    /* ── Log controls ────────────────────────────────────────────────────── */
+    .level-sel { padding:5px 8px; border:1px solid var(--bd); border-radius:var(--r-sm); font-size:12.5px; color:var(--tx); background:var(--sur); cursor:pointer; outline:none; font-family:var(--font); box-shadow:var(--shad); }
+    .level-sel:focus { border-color:var(--ac); }
+    .level-sel-label { font-size:12px; color:var(--mu); white-space:nowrap; }
+    .log-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    .lvl-btn { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid transparent; transition:opacity .12s; }
+    .lvl-btn.off { opacity:.3; }
+    .lvl-DEBUG { background:#f3f4f6; color:#6b7280; border-color:#e5e7eb; }
+    .lvl-INFO  { background:#dbeafe; color:#1d4ed8; border-color:#bfdbfe; }
+    .lvl-WARN  { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+    .lvl-ERROR { background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
+
+    /* ── Log box ─────────────────────────────────────────────────────────── */
+    .log-box { font-family:var(--mono); font-size:12px; background:var(--log-bg); color:var(--log-tx); border:1px solid var(--bd); border-radius:var(--r); padding:12px 14px; overflow-y:auto; height:calc(100vh - 230px); box-shadow:var(--shad); }
+    .log-entry { display:flex; gap:12px; padding:2px 0; line-height:1.55; }
+    .log-entry:hover { background:rgba(128,128,128,.06); border-radius:3px; }
+    .l-time  { color:var(--log-time); min-width:90px; flex-shrink:0; }
+    .l-level { min-width:48px; font-weight:700; flex-shrink:0; }
+    .l-INFO  { color:var(--log-info); }
+    .l-WARN  { color:var(--log-warn); }
+    .l-ERROR { color:var(--log-err); }
+    .l-DEBUG { color:var(--log-dbg); }
+    .l-msg   { flex:1; color:var(--log-tx); }
+    .l-attr  { display:inline-flex; color:var(--log-mu); background:rgba(0,0,0,.04); border-radius:3px; padding:0 5px; margin-left:4px; font-size:11px; }
+    .l-attr-key { opacity:.65; }
+
+    /* Connection dot */
+    .conn-dot { width:7px; height:7px; border-radius:50%; background:var(--mu2); flex-shrink:0; transition:background .3s; }
+    .conn-dot.live { background:var(--ok); box-shadow:0 0 0 3px rgba(5,150,105,.2); }
+
+    /* ── Skeleton loaders ────────────────────────────────────────────────── */
+    .sk-row { display:flex; gap:16px; padding:13px 16px; border-bottom:1px solid var(--bd); align-items:center; }
+    .sk-row:last-child { border-bottom:none; }
+    .sk { animation:sk-pulse 1.5s ease-in-out infinite; border-radius:4px; background:var(--bd); }
+    @keyframes sk-pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+
+    /* ── Dark mode ───────────────────────────────────────────────────────── */
     [data-theme="dark"] {
-      --log-bg:   #0d1117;
-      --log-tx:   #c9d1d9;
-      --log-mu:   #6e7681;
-      --log-time: #484f58;
-      --log-dbg:  #484f58;
-      --log-info: #58a6ff;
-      --log-warn: #e3b341;
-      --log-err:  #f85149;
-      --sb:   #0c0c1f;
-      --bg:   #0f0f1e;
-      --sur:  #171727;
-      --bd:   #2a2a4a;
-      --tx:   #e2e6f0;
-      --mu:   #8892a8;
-      --ac:   #9b5de5;
-      --ach:  #8a4dd0;
-      --ok:   #10b981;
-      --er:   #f87171;
-      --wn:   #fbbf24;
-      --car:  #1c1c32;
-      --car-h:#222242;
-      --hov:  #1c1c32;
+      --bg:    #0f0f1e;
+      --sur:   #16162a;
+      --bd:    #252540;
+      --bd2:   #1e1e38;
+      --tx:    #e2e6f0;
+      --mu:    #8892b0;
+      --mu2:   #4e5a72;
+      --ac:    #9d5cf8;
+      --ach:   #8b4de0;
+      --ac-lo: rgba(157,92,248,.12);
+      --ac-bg: #1e1036;
+      --ok:    #10b981;
+      --ok-bg: #042f1a;
+      --ok-bd: #065f30;
+      --er:    #f87171;
+      --er-bg: #2d0a0a;
+      --er-bd: #521010;
+      --wn:    #fbbf24;
+      --car:   #1c1c32;
+      --car-h: #222242;
+      --hov:   rgba(255,255,255,.025);
+      --shad:  0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+      --log-bg:   #0d0d1a;
+      --log-tx:   #b8c4d8;
+      --log-mu:   #4e5a72;
+      --log-time: #364050;
+      --log-dbg:  #364050;
+      --log-info: #60a5fa;
+      --log-warn: #fbbf24;
+      --log-err:  #f87171;
     }
-    [data-theme="dark"] .badge-live { background: #064e3b; color: #34d399; }
-    [data-theme="dark"] .badge-dry  { background: #2e1065; color: #a78bfa; }
-    [data-theme="dark"] .badge-ok   { background: #064e3b; color: #34d399; }
-    [data-theme="dark"] .badge-err  { background: #450a0a; color: #f87171; }
-    [data-theme="dark"] .badge-neu  { background: #1f2937; color: #9ca3af; }
-    [data-theme="dark"] .bubble-0   { background: #1f2937; color: var(--mu); }
-    [data-theme="dark"] .bubble-pos { background: #450a0a; color: #f87171; }
-    [data-theme="dark"] .lvl-DEBUG  { background: #1f2937; color: #9ca3af; border-color: #374151; }
+    [data-theme="dark"] .badge-live { background:#064e3b; color:#34d399; border-color:#0d6648; }
+    [data-theme="dark"] .badge-dry  { background:#2e1065; color:#c4b5fd; border-color:#3e1d8a; }
+    [data-theme="dark"] .badge-ok   { background:#064e3b; color:#34d399; border-color:#0d6648; }
+    [data-theme="dark"] .badge-err  { background:#450a0a; color:#fca5a5; border-color:#700f0f; }
+    [data-theme="dark"] .badge-neu  { background:#1f2937; color:#9ca3af; border-color:#374151; }
+    [data-theme="dark"] .bubble-0   { background:#1f2937; color:var(--mu); border-color:#374151; }
+    [data-theme="dark"] .bubble-pos { background:#450a0a; color:#f87171; border-color:#700f0f; }
+    [data-theme="dark"] .tag-chip   { background:#1e1036; color:#c4b5fd; border-color:rgba(157,92,248,.25); }
+    [data-theme="dark"] .lvl-DEBUG  { background:#1f2937; color:#9ca3af; border-color:#374151; }
+    [data-theme="dark"] .sk         { background:#252540; }
+    [data-theme="dark"] .l-attr     { background:rgba(255,255,255,.05); }
 
-    /* Theme toggle */
-    .sidebar-bottom { padding: 10px 8px; border-top: 1px solid rgba(255,255,255,.07); }
-    .theme-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; border: none; background: transparent; color: rgba(255,255,255,.45); cursor: pointer; transition: background .12s, color .12s; }
-    .theme-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+    /* ── Empty state ─────────────────────────────────────────────────────── */
+    .empty { text-align:center; padding:56px 16px; color:var(--mu); }
+    .empty svg { opacity:.35; margin-bottom:14px; }
+    .empty-title { font-size:15px; font-weight:600; color:var(--tx); margin-bottom:6px; }
+    .empty-sub   { font-size:13px; line-height:1.6; }
 
-    /* Empty state */
-    .empty { text-align: center; padding: 48px 16px; color: var(--mu); }
-    .empty-title { font-size: 15px; font-weight: 600; color: var(--tx); margin-bottom: 5px; }
-    .empty-sub   { font-size: 13px; }
+    /* ── Toasts ──────────────────────────────────────────────────────────── */
+    #toasts { position:fixed; bottom:24px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:999; }
+    .toast { padding:10px 16px; border-radius:var(--r); font-size:13px; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.2); max-width:340px; animation:fadeUp .18s; }
+    .toast-info    { background:#1e40af; color:#fff; }
+    .toast-success { background:var(--ok); color:#fff; }
+    .toast-error   { background:var(--er); color:#fff; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    /* Toast */
-    #toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
-    .toast { padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 14px rgba(0,0,0,.18); max-width: 320px; animation: fadeUp .18s; }
-    .toast-info    { background: #1e40af; color: #fff; }
-    .toast-success { background: var(--ok); color: #fff; }
-    .toast-error   { background: var(--er); color: #fff; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-
-    /* Misc */
-    .spin { animation: spin .7s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .mono { font-family: var(--mono); }
-    .muted { color: var(--mu); font-size: 12px; }
-    .fw { font-weight: 600; }
+    /* ── Misc ────────────────────────────────────────────────────────────── */
+    .spin { animation:spin .7s linear infinite; display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .mono { font-family:var(--mono); }
+    .muted { color:var(--mu); font-size:12px; }
+    .fw { font-weight:600; }
+    .text-er { color:var(--er); }
+    .text-ok { color:var(--ok); }
   </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><img src="/logo.svg" class="brand-logo" alt="Leash logo">Leash</div>
-    <div class="nav-section">
+    <div class="brand">
+      <img src="/logo.svg" class="brand-logo" alt="Leash logo">
+      <span class="brand-text">Leash</span>
+    </div>
+    <nav class="nav-section">
+      <a class="nav-link" href="#/" id="nl-overview" onclick="navClick(event,'#/')">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/>
+          <rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/>
+        </svg>
+        Overview
+      </a>
       <a class="nav-link" href="#/runs" id="nl-runs" onclick="navClick(event,'#/runs')">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <line x1="1.5" y1="3.5" x2="13.5" y2="3.5"/>
-          <line x1="1.5" y1="7.5" x2="13.5" y2="7.5"/>
-          <line x1="1.5" y1="11.5" x2="13.5" y2="11.5"/>
+          <line x1="1.5" y1="3.5" x2="13.5" y2="3.5"/><line x1="1.5" y1="7.5" x2="13.5" y2="7.5"/><line x1="1.5" y1="11.5" x2="13.5" y2="11.5"/>
         </svg>
         Runs
+        <span id="nav-badge-runs" class="nav-badge" style="display:none"></span>
       </a>
       <a class="nav-link" href="#/policies" id="nl-policies" onclick="navClick(event,'#/policies')">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 1h6l4 4v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
           <polyline points="9,1 9,5 13,5"/>
-          <line x1="4" y1="8" x2="11" y2="8"/>
-          <line x1="4" y1="11" x2="8.5" y2="11"/>
+          <line x1="4" y1="8" x2="11" y2="8"/><line x1="4" y1="11" x2="8.5" y2="11"/>
         </svg>
         Policies
       </a>
       <a class="nav-link" href="#/logs" id="nl-logs" onclick="navClick(event,'#/logs')">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="1" y="2" width="13" height="11" rx="1.5"/>
-          <polyline points="4,6 7,8.5 4,11"/>
-          <line x1="8" y1="11" x2="11" y2="11"/>
+          <polyline points="4,6 7,8.5 4,11"/><line x1="8" y1="11" x2="11" y2="11"/>
         </svg>
         Logs
       </a>
-    </div>
-    <div class="sidebar-bottom">
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-schedule" id="sidebar-schedule" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="6" r="5"/><polyline points="6,3 6,6 8,7.5"/>
+        </svg>
+        <span id="sidebar-schedule-text"></span>
+      </div>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark mode"></button>
     </div>
   </aside>
+
   <main class="main">
     <div id="view" class="page"></div>
   </main>
@@ -274,36 +368,36 @@
 <div id="toasts"></div>
 
 <script>
-// ── Theme ──────────────────────────────────────────────────────────────────
-var moonIcon = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5a6 6 0 1 1-7.5-7.5A7 7 0 1 0 13 9.5z"/></svg>';
-var sunIcon  = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="7.5" r="2.5"/><line x1="7.5" y1="1" x2="7.5" y2="3"/><line x1="7.5" y1="12" x2="7.5" y2="14"/><line x1="1" y1="7.5" x2="3" y2="7.5"/><line x1="12" y1="7.5" x2="14" y2="7.5"/><line x1="3.05" y1="3.05" x2="4.46" y2="4.46"/><line x1="10.54" y1="10.54" x2="11.95" y2="11.95"/><line x1="10.54" y1="4.46" x2="11.95" y2="3.05"/><line x1="3.05" y1="11.95" x2="4.46" y2="10.54"/></svg>';
+// ── Icons ──────────────────────────────────────────────────────────────────
+const moonIcon = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5a6 6 0 1 1-7.5-7.5A7 7 0 1 0 13 9.5z"/></svg>';
+const sunIcon  = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="7.5" r="2.5"/><line x1="7.5" y1="1" x2="7.5" y2="3"/><line x1="7.5" y1="12" x2="7.5" y2="14"/><line x1="1" y1="7.5" x2="3" y2="7.5"/><line x1="12" y1="7.5" x2="14" y2="7.5"/><line x1="3.05" y1="3.05" x2="4.46" y2="4.46"/><line x1="10.54" y1="10.54" x2="11.95" y2="11.95"/><line x1="10.54" y1="4.46" x2="11.95" y2="3.05"/><line x1="3.05" y1="11.95" x2="4.46" y2="10.54"/></svg>';
+const chevLeft = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="9,2 4,7 9,12"/></svg>';
+const chevRight= '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polyline points="4,2 8,6 4,10"/></svg>';
+const playIcon = '<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>';
+const extIcon  = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.5"/><path d="M7 1h3v3M9 1 5.5 4.5"/></svg>';
 
+// ── Theme ──────────────────────────────────────────────────────────────────
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
-  var btn = document.getElementById('theme-btn');
+  const btn = document.getElementById('theme-btn');
   if (btn) btn.innerHTML = t === 'dark' ? sunIcon : moonIcon;
   if (activeEditor) activeEditor.setOption('theme', t === 'dark' ? 'dracula' : 'default');
 }
 function initTheme() {
-  var saved = localStorage.getItem('leash-theme');
+  const saved = localStorage.getItem('leash-theme');
   setTheme(saved || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'));
 }
 function toggleTheme() {
-  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   localStorage.setItem('leash-theme', next);
   setTheme(next);
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
 let appUrl = 'https://app.datadoghq.com';
-let logES = null;
-let logAll = [];
-let logLevels = new Set(['DEBUG','INFO','WARN','ERROR']);
-let logPaused = false;
-let logAutoScroll = true;
-let editorDirty = false;
-let kbHandler = null;
-let activeEditor = null;
+let logES = null, logAll = [], logLevels = new Set(['DEBUG','INFO','WARN','ERROR']);
+let logPaused = false, logAutoScroll = true;
+let editorDirty = false, kbHandler = null, activeEditor = null;
 
 // ── Router ─────────────────────────────────────────────────────────────────
 function navClick(e, hash) {
@@ -314,42 +408,46 @@ function navClick(e, hash) {
 }
 
 function cleanup() {
-  if (logES)      { logES.close(); logES = null; }
-  if (kbHandler)  { document.removeEventListener('keydown', kbHandler); kbHandler = null; }
+  if (logES)     { logES.close(); logES = null; }
+  if (kbHandler) { document.removeEventListener('keydown', kbHandler); kbHandler = null; }
   activeEditor = null;
 }
 
-function route() {
-  const h = location.hash || '#/runs';
-  cleanup();
-  document.getElementById('nl-runs').classList.toggle('active',
-    h === '#/runs' || h.startsWith('#/runs/'));
-  document.getElementById('nl-policies').classList.toggle('active',
-    h === '#/policies' || h.startsWith('#/policies/'));
-  document.getElementById('nl-logs').classList.toggle('active', h === '#/logs');
-
-  if      (h === '#/runs')              pageRunsList();
-  else if (h.startsWith('#/runs/'))     pageRunDetail(h.slice(7));
-  else if (h === '#/policies')          pagePoliciesList();
-  else if (h.startsWith('#/policies/')) pagePolicyEditor(decodeURIComponent(h.slice(11)));
-  else if (h === '#/logs')              pageLogs();
-  else                                  pageRunsList();
+function setActive(id) {
+  ['nl-overview','nl-runs','nl-policies','nl-logs'].forEach(n => {
+    document.getElementById(n)?.classList.remove('active');
+  });
+  document.getElementById(id)?.classList.add('active');
 }
 
+function route() {
+  const h = location.hash || '#/';
+  cleanup();
+  const isOverview  = h === '#/' || h === '#/overview';
+  const isRuns      = h === '#/runs' || h.startsWith('#/runs/');
+  const isPolicies  = h === '#/policies' || h.startsWith('#/policies/');
+  const isLogs      = h === '#/logs';
+  if (isOverview) setActive('nl-overview');
+  else if (isRuns) setActive('nl-runs');
+  else if (isPolicies) setActive('nl-policies');
+  else if (isLogs) setActive('nl-logs');
+
+  if      (isOverview)               pageOverview();
+  else if (h === '#/runs')           pageRunsList();
+  else if (h.startsWith('#/runs/'))  pageRunDetail(h.slice(7));
+  else if (h === '#/policies')       pagePoliciesList();
+  else if (h.startsWith('#/policies/')) pagePolicyEditor(decodeURIComponent(h.slice(11)));
+  else if (isLogs)                   pageLogs();
+  else                               pageOverview();
+}
 window.addEventListener('hashchange', route);
 
 // ── API ────────────────────────────────────────────────────────────────────
 async function api(method, path, body) {
   const opts = { method, headers: {} };
-  if (body !== undefined) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  }
+  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   const r = await fetch(path, opts);
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({ error: r.statusText }));
-    throw new Error(e.error || r.statusText);
-  }
+  if (!r.ok) { const e = await r.json().catch(() => ({ error: r.statusText })); throw new Error(e.error || r.statusText); }
   if (r.status === 204) return null;
   return r.json();
 }
@@ -384,13 +482,9 @@ function fmtLogTime(d) {
   return dt.toTimeString().slice(0,8) + '.' + String(dt.getMilliseconds()).padStart(3,'0');
 }
 
-function fmtSize(b) {
-  return b < 1024 ? b + ' B' : (b/1024).toFixed(1) + ' KB';
-}
+function fmtSize(b) { return b < 1024 ? b + ' B' : (b/1024).toFixed(1) + ' KB'; }
 
-function resName(props) {
-  return (props && (props.name || props.title || props.email)) || '—';
-}
+function resName(props) { return (props && (props.name || props.title || props.email)) || '—'; }
 
 function ddLink(type, id) {
   if (!id) return null;
@@ -411,27 +505,163 @@ function dispProp(v) {
   return String(v);
 }
 
-const extIcon = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4.5 2H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.5"/><path d="M7 1h3v3M9 1 5.5 4.5"/></svg>';
-const chevLeft = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="9,2 4,7 9,12"/></svg>';
-const playIcon = '<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>';
+function tagsHTML(v) {
+  let tags = [];
+  if (Array.isArray(v)) tags = v.map(String);
+  else if (typeof v === 'string') tags = v.split(',').map(s => s.trim()).filter(Boolean);
+  if (!tags.length) return '';
+  return '<div class="tag-list">' + tags.map(t => '<span class="tag-chip">' + esc(t) + '</span>').join('') + '</div>';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function skeletonRows(n, cols) {
+  const widths = [['60%','30%','40%','20%','15%'], ['70%','25%','35%'], ['50%','40%','30%','20%']];
+  const w = widths[cols % widths.length];
+  return Array.from({length:n}, (_, i) =>
+    '<div class="sk-row">' +
+      w.slice(0, cols).map(ww =>
+        '<div class="sk" style="height:14px;width:' + ww + ';flex:' + (ww === '60%' || ww === '70%' ? '2' : '1') + '"></div>'
+      ).join('') +
+    '</div>'
+  ).join('');
+}
+
+// ── Overview page ──────────────────────────────────────────────────────────
+async function pageOverview() {
+  setView(
+    '<div class="page-header">' +
+      '<div><h1 class="page-title">Overview</h1><div class="page-sub" id="ov-sub">Loading…</div></div>' +
+      '<div class="btn-row">' +
+        '<label class="dry-check"><input type="checkbox" id="ov-dry" checked> Dry run</label>' +
+        '<button class="btn btn-primary" id="ov-run-btn">' + playIcon + ' Run Now</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="stat-grid" id="ov-stats">' +
+      ['12','14','16','18'].map(w =>
+        '<div class="stat-card"><div class="sk" style="height:32px;width:32px;border-radius:8px;margin-bottom:14px"></div>' +
+        '<div class="sk sk-line" style="width:' + w + 'ex;margin-bottom:8px"></div>' +
+        '<div class="sk" style="height:26px;width:3ex"></div></div>'
+      ).join('') +
+    '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">' +
+      '<span style="font-size:13px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;font-size:11.5px">Recent Runs</span>' +
+      '<a href="#/runs" onclick="navClick(event,\'#/runs\')" style="font-size:12.5px;color:var(--ac);font-weight:500">View all →</a>' +
+    '</div>' +
+    '<div class="card">' +
+      '<table class="table"><thead><tr><th>Time</th><th>Mode</th><th>Policies</th><th>Matches</th><th>Run ID</th></tr></thead>' +
+      '<tbody id="ov-runs">' + skeletonRows(4, 5) + '</tbody></table>' +
+    '</div>'
+  );
+
+  $('ov-run-btn').onclick = () => doRun(null, 'ov-run-btn', 'ov-dry');
+
+  try {
+    const runs = await api('GET', '/api/runs');
+    const sub = $('ov-sub');
+    if (sub) {
+      if (runs && runs.length > 0) {
+        sub.textContent = runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' · last ' + relative(runs[0].generated_at);
+      } else {
+        sub.textContent = 'No runs yet';
+      }
+    }
+
+    const totalMatches = runs ? runs.reduce((s, r) => s + r.total_matches, 0) : 0;
+    const lastRun = runs && runs.length > 0 ? runs[0] : null;
+    const policyCount = lastRun ? lastRun.policy_count : 0;
+
+    const statsEl = $('ov-stats');
+    if (statsEl) statsEl.innerHTML =
+      statCard('si-ac',
+        '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1.5" y1="3.5" x2="13.5" y2="3.5"/><line x1="1.5" y1="7.5" x2="13.5" y2="7.5"/><line x1="1.5" y1="11.5" x2="13.5" y2="11.5"/></svg>',
+        'Total Runs', runs ? runs.length : 0,
+        runs && runs.length > 0 ? 'last ' + relative(lastRun.generated_at) : 'No runs yet'
+      ) +
+      statCard(totalMatches > 0 ? 'si-er' : 'si-ok',
+        totalMatches > 0
+          ? '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="7.5" r="6"/><line x1="7.5" y1="4.5" x2="7.5" y2="7.5"/><circle cx="7.5" cy="10" r=".5" fill="currentColor" stroke="none"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="2,8 5.5,11.5 13,4"/></svg>',
+        'Violations', totalMatches,
+        totalMatches > 0 ? 'across all runs' : 'all clean'
+      ) +
+      statCard('si-neu',
+        '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 1h6l4 4v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/><polyline points="9,1 9,5 13,5"/></svg>',
+        'Policies', policyCount,
+        policyCount > 0 ? 'in last run' : 'none loaded'
+      ) +
+      statCard('si-neu',
+        '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="7.5" r="6"/><polyline points="7.5,4 7.5,7.5 10,9"/></svg>',
+        'Schedule', appSchedule || '—',
+        appSchedule ? 'cron expression' : 'manual only',
+        true
+      );
+
+    const tbody = $('ov-runs');
+    if (!tbody) return;
+    if (!runs || runs.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="5"><div class="empty">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          '<div class="empty-title">No runs yet</div>' +
+          '<div class="empty-sub">Click "Run Now" to evaluate your policies against Datadog.</div>' +
+        '</div></td></tr>';
+      return;
+    }
+
+    // update badge
+    const anyMatches = runs.find(r => r.total_matches > 0);
+    if (anyMatches) {
+      const nb = $('nav-badge-runs');
+      if (nb) { nb.textContent = anyMatches.total_matches; nb.style.display = ''; }
+    }
+
+    tbody.innerHTML = runs.slice(0, 5).map(r => runRow(r)).join('');
+  } catch(e) {
+    const sub = $('ov-sub');
+    if (sub) sub.textContent = 'Failed to load';
+    const tbody = $('ov-runs');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="muted" style="padding:16px">Error: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+function statCard(iconCls, iconSvg, label, value, sub, small) {
+  const valStr = small ? '<span style="font-size:13px;font-weight:700;letter-spacing:0;line-height:1.3">' + esc(String(value)) + '</span>' :
+    '<div class="stat-value">' + esc(String(value)) + '</div>';
+  return '<div class="stat-card">' +
+    '<div class="stat-icon ' + iconCls + '">' + iconSvg + '</div>' +
+    '<div class="stat-label">' + esc(label) + '</div>' +
+    (small ? valStr : valStr) +
+    '<div class="stat-sub">' + esc(sub) + '</div>' +
+  '</div>';
+}
+
+function runRow(r) {
+  const mc = r.total_matches > 0;
+  return '<tr class="clickable" onclick="location.hash=\'#/runs/' + r.run_id + '\'">' +
+    '<td><div class="fw">' + fmtDate(r.generated_at) + '</div><div class="muted">' + relative(r.generated_at) + '</div></td>' +
+    '<td><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' + (r.dry_run ? 'Dry Run' : 'Live') + '</span></td>' +
+    '<td>' + r.policy_count + '</td>' +
+    '<td style="font-weight:' + (mc ? 700 : 400) + '" class="' + (mc ? 'text-er' : '') + '">' + r.total_matches + '</td>' +
+    '<td class="mono muted">' + r.run_id.slice(0,8) + '</td>' +
+  '</tr>';
+}
 
 // ── Runs list ──────────────────────────────────────────────────────────────
 async function pageRunsList() {
   setView(
     '<div class="page-header">' +
-      '<h1 class="page-title">Runs</h1>' +
+      '<div><h1 class="page-title">Runs</h1></div>' +
       '<div class="btn-row">' +
         '<label class="dry-check"><input type="checkbox" id="dry-chk" checked> Dry run</label>' +
         '<button class="btn btn-primary" id="run-btn">' + playIcon + ' Run Now</button>' +
       '</div>' +
     '</div>' +
     '<div class="card">' +
-      '<table class="table"><thead><tr>' +
-        '<th>Time</th><th>Mode</th><th>Policies</th><th>Matches</th><th>Run ID</th>' +
-      '</tr></thead>' +
-      '<tbody id="runs-body">' +
-        '<tr><td colspan="5"><div class="empty"><span class="spin">&#9675;</span></div></td></tr>' +
-      '</tbody></table>' +
+      '<table class="table"><thead><tr><th>Time</th><th>Mode</th><th>Policies</th><th>Matches</th><th>Run ID</th></tr></thead>' +
+      '<tbody id="runs-body">' + skeletonRows(6, 5) + '</tbody></table>' +
     '</div>'
   );
 
@@ -444,47 +674,32 @@ async function pageRunsList() {
     if (!runs || runs.length === 0) {
       body.innerHTML =
         '<tr><td colspan="5"><div class="empty">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
           '<div class="empty-title">No runs yet</div>' +
           '<div class="empty-sub">Click "Run Now" to evaluate your policies against Datadog.</div>' +
         '</div></td></tr>';
       return;
     }
-    body.innerHTML = runs.map(function(r) {
-      var mc = r.total_matches > 0;
-      return '<tr class="clickable" onclick="location.hash=\'#/runs/' + r.run_id + '\'">' +
-        '<td>' +
-          '<div class="fw">' + fmtDate(r.generated_at) + '</div>' +
-          '<div class="muted">' + relative(r.generated_at) + '</div>' +
-        '</td>' +
-        '<td><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' +
-          (r.dry_run ? 'Dry Run' : 'Live') + '</span></td>' +
-        '<td>' + r.policy_count + '</td>' +
-        '<td style="font-weight:' + (mc ? 700 : 400) + ';color:' + (mc ? 'var(--er)' : 'inherit') + '">' + r.total_matches + '</td>' +
-        '<td class="mono muted">' + r.run_id.slice(0,8) + '</td>' +
-      '</tr>';
-    }).join('');
-  } catch (e) {
-    var body = $('runs-body');
+    body.innerHTML = runs.map(r => runRow(r)).join('');
+  } catch(e) {
+    const body = $('runs-body');
     if (body) body.innerHTML =
-      '<tr><td colspan="5"><div class="empty">' +
-        '<div class="empty-title">Failed to load runs</div>' +
-        '<div class="empty-sub">' + e.message + '</div>' +
-      '</div></td></tr>';
+      '<tr><td colspan="5"><div class="empty"><div class="empty-title">Failed to load runs</div><div class="empty-sub">' + esc(e.message) + '</div></div></td></tr>';
   }
 }
 
 async function doRun(policyPath, btnId, dryChkId) {
-  var dry = $(dryChkId) ? $(dryChkId).checked : true;
-  var btn = $(btnId);
+  const dry = $(dryChkId) ? $(dryChkId).checked : true;
+  const btn = $(btnId);
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">&#9675;</span> Running…'; }
   try {
-    var body = { dry_run: dry };
+    const body = { dry_run: dry };
     if (policyPath) body.policy_path = policyPath;
-    var report = await api('POST', '/api/runs', body);
-    var total = report.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
+    const report = await api('POST', '/api/runs', body);
+    const total = report.policies.reduce((s, p) => s + p.match_count, 0);
     toast('Run complete — ' + total + ' match' + (total === 1 ? '' : 'es') + ' found', total > 0 ? 'info' : 'success');
     location.hash = '#/runs/' + report.run_id;
-  } catch (e) {
+  } catch(e) {
     toast('Run failed: ' + e.message, 'error');
     if (btn) { btn.disabled = false; btn.innerHTML = playIcon + ' Run Now'; }
   }
@@ -498,138 +713,125 @@ async function pageRunDetail(id) {
   );
 
   try {
-    var r = await api('GET', '/api/runs/' + id);
-    var totalMatches = r.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
-    var totalPassing = r.policies.reduce(function(s, p) { return s + (p.pass_count || 0); }, 0);
-    var matchPols = r.policies.filter(function(p) { return p.match_count > 0; });
-    var cleanPols = r.policies.filter(function(p) { return p.match_count === 0; });
+    const r = await api('GET', '/api/runs/' + id);
+    const totalMatches = r.policies.reduce((s, p) => s + p.match_count, 0);
+    const totalPassing = r.policies.reduce((s, p) => s + (p.pass_count || 0), 0);
+    const matchPols = r.policies.filter(p => p.match_count > 0);
+    const cleanPols = r.policies.filter(p => p.match_count === 0);
 
-    function passCardHTML(m, resourceType) {
-      var name = resName(m.properties);
-      var link = ddLink(resourceType, m.id);
-      var priority = ['name','title','email','type','status','sli_type','slo_type'];
-      var entries = Object.entries(m.properties || {}).filter(function(kv) { return kv[0] !== 'raw'; });
-      var sorted = entries.filter(function(kv) { return priority.indexOf(kv[0]) >= 0; })
-        .concat(entries.filter(function(kv) { return priority.indexOf(kv[0]) < 0; }))
+    function propRows(props) {
+      const priority = ['name','title','email','type','status','sli_type','slo_type'];
+      const entries = Object.entries(props || {}).filter(([k]) => k !== 'raw');
+      const sorted = entries.filter(([k]) => priority.includes(k))
+        .concat(entries.filter(([k]) => !priority.includes(k)))
         .slice(0, 14);
-      var propRows = sorted.map(function(kv) {
-        var d = dispProp(kv[1]);
-        return '<tr><td>' + kv[0] + '</td><td>' + (d.length > 140 ? d.slice(0,140) + '…' : d) + '</td></tr>';
+
+      return sorted.map(([k, v]) => {
+        if (k === 'tags' && (Array.isArray(v) || typeof v === 'string')) {
+          return '<tr><td>' + esc(k) + '</td><td>' + tagsHTML(v) + '</td></tr>';
+        }
+        const d = dispProp(v);
+        return '<tr><td>' + esc(k) + '</td><td>' + esc(d.length > 140 ? d.slice(0,140) + '…' : d) + '</td></tr>';
       }).join('');
-      return '<div class="match-card passing">' +
+    }
+
+    function matchCardHTML(m, resourceType, pol, isViolation) {
+      const name = resName(m.properties);
+      const link = ddLink(resourceType, m.id);
+      const rows = propRows(m.properties);
+      const acts = isViolation
+        ? (pol.actions_taken || []).filter(a => a.resource_id === m.id)
+        : [];
+      const actBadges = acts.map(a =>
+        '<span class="badge ' + (a.error ? 'badge-err' : 'badge-ok') + '">' +
+          esc(a.action_type) + (a.dry_run ? ' (dry)' : '') + '</span>'
+      ).join('');
+
+      return '<div class="match-card ' + (isViolation ? 'violation' : 'passing') + '">' +
         '<div class="match-header">' +
           '<div style="flex:1;min-width:0">' +
-            '<div class="match-name">' + name + '</div>' +
-            '<div class="match-id">' + m.id + '</div>' +
+            '<div class="match-name">' + esc(name) + '</div>' +
+            '<div class="match-id">' + esc(m.id) + '</div>' +
           '</div>' +
           (link ? '<a class="dd-link" href="' + link + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
         '</div>' +
-        (propRows ? '<div class="match-body"><table class="props-table"><tbody>' + propRows + '</tbody></table></div>' : '') +
+        (rows || actBadges ?
+          '<div class="match-body">' +
+            (rows ? '<table class="props-table"><tbody>' + rows + '</tbody></table>' : '') +
+            (actBadges ? '<div class="action-badges">' + actBadges + '</div>' : '') +
+          '</div>' : '') +
       '</div>';
     }
 
-    function matchCardHTML(m, resourceType, pol) {
-      var name = resName(m.properties);
-      var link = ddLink(resourceType, m.id);
-      var priority = ['name','title','email','type','status','sli_type','slo_type'];
-      var entries = Object.entries(m.properties || {}).filter(function(kv) { return kv[0] !== 'raw'; });
-      var sorted = entries.filter(function(kv) { return priority.indexOf(kv[0]) >= 0; })
-        .concat(entries.filter(function(kv) { return priority.indexOf(kv[0]) < 0; }))
-        .slice(0, 14);
-
-      var propRows = sorted.map(function(kv) {
-        var d = dispProp(kv[1]);
-        return '<tr><td>' + kv[0] + '</td><td>' + (d.length > 140 ? d.slice(0,140) + '…' : d) + '</td></tr>';
-      }).join('');
-
-      var acts = (pol.actions_taken || []).filter(function(a) { return a.resource_id === m.id; });
-      var actBadges = acts.map(function(a) {
-        var cls = a.error ? 'badge-err' : 'badge-ok';
-        return '<span class="badge ' + cls + '">' + a.action_type + (a.dry_run ? ' (dry)' : '') + '</span>';
-      }).join('');
-
-      return '<div class="match-card">' +
-        '<div class="match-header">' +
-          '<div style="flex:1;min-width:0">' +
-            '<div class="match-name">' + name + '</div>' +
-            '<div class="match-id">' + m.id + '</div>' +
-          '</div>' +
-          (link ? '<a class="dd-link" href="' + link + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
-        '</div>' +
-        '<div class="match-body">' +
-          (propRows ? '<table class="props-table"><tbody>' + propRows + '</tbody></table>' : '') +
-          (actBadges ? '<div class="action-badges">' + actBadges + '</div>' : '') +
-        '</div>' +
-      '</div>';
-    }
-
-    function polRows(policies) {
-      return policies.map(function(p) {
-        var bubbCls = p.match_count > 0 ? 'bubble-pos' : 'bubble-0';
-        var matchCards = (p.matches || []).map(function(m) { return matchCardHTML(m, p.resource, p); }).join('');
-        var passCt = p.pass_count || 0;
-        var uid = 'pass-' + p.policy_name.replace(/\W+/g, '-');
-        var passSection = passCt > 0 ?
-          '<div style="padding:6px 16px 4px">' +
-            '<button class="btn btn-ghost btn-sm" onclick="var c=document.getElementById(\'' + uid + '\');c.hidden=!c.hidden;this.textContent=(c.hidden?\'Show \':\'Hide \')+\'' + passCt + ' passing\'">' +
+    function polSectionHTML(pol, isViolation) {
+      const bubble = pol.match_count > 0 ? 'bubble-pos' : 'bubble-0';
+      const uid = 'pol-' + pol.policy_name.replace(/\W+/g,'-');
+      const matchCards = (pol.matches || []).map(m => matchCardHTML(m, pol.resource, pol, true)).join('');
+      const passCt = pol.pass_count || 0;
+      const passCards = (pol.passing || []).map(m => matchCardHTML(m, pol.resource, pol, false)).join('');
+      const passSection = passCt > 0
+        ? '<div class="pass-toggle-wrap">' +
+            '<button class="btn btn-ghost btn-xs" onclick="(function(b,el){el.style.display=el.style.display===\'none\'?\'block\':\'none\';b.textContent=(el.style.display===\'none\'?\'Show \':\'Hide \')+\'' + passCt + ' passing\'})(this,document.getElementById(\'' + uid + '-pass\'))">' +
               'Show ' + passCt + ' passing' +
             '</button>' +
           '</div>' +
-          '<div id="' + uid + '" hidden>' +
-            (p.passing || []).map(function(m) { return passCardHTML(m, p.resource); }).join('') +
-          '</div>' : '';
-        var hasContent = matchCards || passSection;
-        return '<tr>' +
-          '<td>' +
-            '<div class="fw" style="margin-bottom:' + (hasContent ? '4px' : '0') + '">' + p.policy_name + '</div>' +
-            matchCards +
-            passSection +
-          '</td>' +
-          '<td class="muted">' + p.resource.replace('datadog.','') + '</td>' +
-          '<td><span class="match-bubble ' + bubbCls + '">' + p.match_count + '</span></td>' +
-        '</tr>';
-      }).join('');
+          '<div id="' + uid + '-pass" style="display:none">' + passCards + '</div>'
+        : '';
+
+      // auto-open if violations; closed if clean
+      const open = isViolation;
+      return '<div class="pol-row" id="' + uid + '">' +
+        '<div class="pol-row-hdr" onclick="togglePolRow(\'' + uid + '\')">' +
+          '<span class="pol-chevron' + (open ? ' open' : '') + '">' + chevRight + '</span>' +
+          '<span class="pol-row-name">' + esc(pol.policy_name) + '</span>' +
+          '<span class="pol-row-type">' + esc(pol.resource.replace('datadog.','')) + '</span>' +
+          '<span class="match-bubble ' + bubble + '">' + pol.match_count + '</span>' +
+        '</div>' +
+        '<div class="pol-row-body' + (open ? ' open' : '') + '">' +
+          (matchCards || passSection
+            ? matchCards + passSection
+            : '<div style="padding:12px 16px;font-size:13px;color:var(--mu)">No violations</div>') +
+        '</div>' +
+      '</div>';
     }
 
     $('run-detail').innerHTML =
       '<div class="page-header">' +
-        '<h1 class="page-title">Run <span class="mono" style="font-size:15px">' + id.slice(0,8) + '</span></h1>' +
+        '<div><h1 class="page-title">Run <span class="mono" style="font-size:15px;font-weight:400">' + esc(id.slice(0,8)) + '</span></h1></div>' +
       '</div>' +
       '<div class="run-meta">' +
-        '<div class="meta-item"><div class="meta-label">Mode</div>' +
-          '<div class="meta-value"><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' +
-          (r.dry_run ? 'Dry Run' : 'Live') + '</span></div></div>' +
-        '<div class="meta-item"><div class="meta-label">Time</div>' +
-          '<div class="meta-value">' + fmtDate(r.generated_at) + '</div></div>' +
-        '<div class="meta-item"><div class="meta-label">Policies</div>' +
-          '<div class="meta-value">' + r.policies.length + '</div></div>' +
-        '<div class="meta-item"><div class="meta-label">Matches</div>' +
-          '<div class="meta-value" style="color:' + (totalMatches > 0 ? 'var(--er)' : 'inherit') + '">' + totalMatches + '</div></div>' +
-        '<div class="meta-item"><div class="meta-label">Passing</div>' +
-          '<div class="meta-value" style="color:var(--ok)">' + totalPassing + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Mode</div><div class="meta-value"><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' + (r.dry_run ? 'Dry Run' : 'Live') + '</span></div></div>' +
+        '<div class="meta-item"><div class="meta-label">Time</div><div class="meta-value">' + fmtDate(r.generated_at) + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Policies</div><div class="meta-value">' + r.policies.length + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Violations</div><div class="meta-value ' + (totalMatches > 0 ? 'text-er' : '') + '">' + totalMatches + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Passing</div><div class="meta-value text-ok">' + totalPassing + '</div></div>' +
       '</div>' +
 
       (matchPols.length > 0 ?
-        '<div class="section-label sl-err mt12">' + totalMatches + ' match' + (totalMatches===1?'':'es') + ' found</div>' +
-        '<div class="card">' +
-          '<table class="table"><thead><tr><th>Policy</th><th>Resource</th><th>Matches</th></tr></thead>' +
-          '<tbody>' + polRows(matchPols) + '</tbody></table>' +
-        '</div>' : '') +
+        '<div class="section-hdr"><span class="sh-dot sh-dot-er"></span><span class="sh-title">' + totalMatches + ' violation' + (totalMatches===1?'':'s') + ' found</span><span class="sh-count">' + matchPols.length + ' polic' + (matchPols.length===1?'y':'ies') + '</span></div>' +
+        '<div class="card" style="margin-bottom:20px">' + matchPols.map(p => polSectionHTML(p, true)).join('') + '</div>' : '') +
 
       (cleanPols.length > 0 ?
-        '<div class="section-label sl-ok mt20">' + cleanPols.length + ' clean polic' + (cleanPols.length===1?'y':'ies') + '</div>' +
-        '<div class="card">' +
-          '<table class="table"><thead><tr><th>Policy</th><th>Resource</th><th>Matches</th></tr></thead>' +
-          '<tbody>' + polRows(cleanPols) + '</tbody></table>' +
-        '</div>' : '') +
+        '<div class="section-hdr' + (matchPols.length > 0 ? ' mt24' : '') + '"><span class="sh-dot sh-dot-ok"></span><span class="sh-title">' + cleanPols.length + ' clean polic' + (cleanPols.length===1?'y':'ies') + '</span></div>' +
+        '<div class="card">' + cleanPols.map(p => polSectionHTML(p, false)).join('') + '</div>' : '') +
 
       (r.policies.length === 0 ?
         '<div class="card"><div class="empty"><div class="empty-title">No policies ran</div></div></div>' : '');
 
-  } catch (e) {
+  } catch(e) {
     $('run-detail').innerHTML =
-      '<div class="empty"><div class="empty-title">Failed to load run</div><div class="empty-sub">' + e.message + '</div></div>';
+      '<div class="empty"><div class="empty-title">Failed to load run</div><div class="empty-sub">' + esc(e.message) + '</div></div>';
   }
+}
+
+function togglePolRow(uid) {
+  const row = $(uid);
+  if (!row) return;
+  const chev = row.querySelector('.pol-chevron');
+  const body = row.querySelector('.pol-row-body');
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  chev && chev.classList.toggle('open', !open);
 }
 
 // ── Policies list ──────────────────────────────────────────────────────────
@@ -637,58 +839,54 @@ async function pagePoliciesList() {
   setView(
     '<div class="page-header"><h1 class="page-title">Policies</h1></div>' +
     '<div class="card">' +
-      '<table class="table"><thead><tr>' +
-        '<th>File</th><th>Directory</th><th style="text-align:right">Size</th>' +
-      '</tr></thead>' +
-      '<tbody id="pol-body">' +
-        '<tr><td colspan="3"><div class="empty"><span class="spin">&#9675;</span></div></td></tr>' +
-      '</tbody></table>' +
+      '<table class="table"><thead><tr><th>File</th><th>Directory</th><th style="text-align:right">Size</th></tr></thead>' +
+      '<tbody id="pol-body">' + skeletonRows(4, 3) + '</tbody></table>' +
     '</div>'
   );
 
   try {
-    var pols = await api('GET', '/api/policies');
-    var body = $('pol-body');
+    const pols = await api('GET', '/api/policies');
+    const body = $('pol-body');
     if (!body) return;
     if (!pols || pols.length === 0) {
       body.innerHTML =
         '<tr><td colspan="3"><div class="empty">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
           '<div class="empty-title">No policies found</div>' +
           '<div class="empty-sub">Add YAML files to your policy directories.</div>' +
         '</div></td></tr>';
       return;
     }
-    body.innerHTML = pols.map(function(p) {
-      var parts = p.path.split('/');
-      var file  = parts.pop();
-      var dir   = parts.join('/') || '.';
+    body.innerHTML = pols.map(p => {
+      const parts = p.path.split('/');
+      const file  = parts.pop();
+      const dir   = parts.join('/') || '.';
       return '<tr class="clickable" onclick="location.hash=\'#/policies/' + encodeURIComponent(p.path) + '\'">' +
-        '<td><span class="fw">' + file + '</span></td>' +
-        '<td class="muted mono">' + dir + '</td>' +
+        '<td><span class="fw">' + esc(file) + '</span></td>' +
+        '<td class="muted mono">' + esc(dir) + '</td>' +
         '<td class="muted" style="text-align:right">' + fmtSize(p.size) + '</td>' +
       '</tr>';
     }).join('');
-  } catch (e) {
-    var body2 = $('pol-body');
-    if (body2) body2.innerHTML =
-      '<tr><td colspan="3"><div class="empty">' +
-        '<div class="empty-title">Error</div><div class="empty-sub">' + e.message + '</div>' +
-      '</div></td></tr>';
+  } catch(e) {
+    const body = $('pol-body');
+    if (body) body.innerHTML =
+      '<tr><td colspan="3"><div class="empty"><div class="empty-title">Error</div><div class="empty-sub">' + esc(e.message) + '</div></div></td></tr>';
   }
 }
 
 // ── Policy editor ──────────────────────────────────────────────────────────
 async function pagePolicyEditor(path) {
   editorDirty = false;
-  var parts    = path.split('/');
-  var filename = parts[parts.length - 1];
+  const parts    = path.split('/');
+  const filename = parts[parts.length - 1];
 
   setView(
     '<a class="back-link" href="#/policies" onclick="navClick(event,\'#/policies\')">' + chevLeft + ' Policies</a>' +
     '<div class="editor-header">' +
-      '<div class="editor-filename">' + filename + '</div>' +
+      '<div class="editor-filename">' + esc(filename) + '</div>' +
       '<div class="btn-row">' +
         '<span class="save-status" id="save-status"></span>' +
+        '<span class="muted" style="font-size:11px">⌘S to save</span>' +
         '<label class="dry-check"><input type="checkbox" id="ed-dry" checked> Dry run</label>' +
         '<button class="btn btn-ghost btn-sm" id="run-pol-btn">' + playIcon + ' Run</button>' +
         '<button class="btn btn-primary btn-sm" id="save-btn">Save</button>' +
@@ -697,90 +895,74 @@ async function pagePolicyEditor(path) {
     '<div class="cm-wrap" id="editor-ta"></div>'
   );
 
-  var cmTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dracula' : 'default';
-  var cm = CodeMirror($('editor-ta'), {
-    mode: 'yaml',
-    theme: cmTheme,
-    lineNumbers: true,
-    tabSize: 2,
-    indentWithTabs: false,
-    lineWrapping: false,
-    extraKeys: { Tab: function(c) { c.replaceSelection('  ', 'end'); } },
+  const cmTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dracula' : 'default';
+  const cm = CodeMirror($('editor-ta'), {
+    mode: 'yaml', theme: cmTheme, lineNumbers: true, tabSize: 2,
+    indentWithTabs: false, lineWrapping: false,
+    extraKeys: { Tab: c => c.replaceSelection('  ', 'end') },
   });
-  var original = '';
+  let original = '';
 
   try {
-    var data = await api('GET', '/api/policies?path=' + encodeURIComponent(path));
+    const data = await api('GET', '/api/policies?path=' + encodeURIComponent(path));
     cm.setValue(data.content);
     original = data.content;
     cm.clearHistory();
-  } catch (e) {
+  } catch(e) {
     toast('Failed to load policy: ' + e.message, 'error');
   }
 
-  cm.on('change', function() {
+  cm.on('change', () => {
     editorDirty = cm.getValue() !== original;
-    var ss = $('save-status');
-    if (ss) {
-      ss.textContent = editorDirty ? 'Unsaved changes' : '';
-      ss.className   = 'save-status' + (editorDirty ? ' dirty' : '');
-    }
+    const ss = $('save-status');
+    if (ss) { ss.textContent = editorDirty ? 'Unsaved changes' : ''; ss.className = 'save-status' + (editorDirty ? ' dirty' : ''); }
   });
-  cm.on('focus', function() { var w = $('editor-ta'); if (w) w.classList.add('focused'); });
-  cm.on('blur',  function() { var w = $('editor-ta'); if (w) w.classList.remove('focused'); });
+  cm.on('focus', () => $('editor-ta')?.classList.add('focused'));
+  cm.on('blur',  () => $('editor-ta')?.classList.remove('focused'));
   activeEditor = cm;
 
   async function save() {
-    var btn = $('save-btn');
+    const btn = $('save-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     try {
       await api('PUT', '/api/policies?path=' + encodeURIComponent(path), { content: cm.getValue() });
-      original    = cm.getValue();
-      editorDirty = false;
-      var ss = $('save-status');
+      original = cm.getValue(); editorDirty = false;
+      const ss = $('save-status');
       if (ss) { ss.textContent = 'Saved'; ss.className = 'save-status saved'; }
-      setTimeout(function() {
-        var s2 = $('save-status');
-        if (s2 && s2.textContent === 'Saved') s2.textContent = '';
-      }, 2500);
+      setTimeout(() => { const s2 = $('save-status'); if (s2 && s2.textContent === 'Saved') s2.textContent = ''; }, 2500);
       toast('Policy saved', 'success');
-    } catch (e) {
+    } catch(e) {
       toast('Save failed: ' + e.message, 'error');
     } finally {
-      var btn2 = $('save-btn');
+      const btn2 = $('save-btn');
       if (btn2) { btn2.disabled = false; btn2.textContent = 'Save'; }
     }
   }
 
   $('save-btn').onclick = save;
-
-  $('run-pol-btn').onclick = async function() {
+  $('run-pol-btn').onclick = async () => {
     if (editorDirty) await save();
-    var btn = $('run-pol-btn');
+    const btn = $('run-pol-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">&#9675;</span> Running…'; }
-    var dry = $('ed-dry') ? $('ed-dry').checked : true;
+    const dry = $('ed-dry') ? $('ed-dry').checked : true;
     try {
-      var report = await api('POST', '/api/runs', { dry_run: dry, policy_path: path });
-      var total = report.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
+      const report = await api('POST', '/api/runs', { dry_run: dry, policy_path: path });
+      const total = report.policies.reduce((s, p) => s + p.match_count, 0);
       toast('Run complete — ' + total + ' match' + (total===1?'':'es') + ' found', total > 0 ? 'info' : 'success');
       location.hash = '#/runs/' + report.run_id;
-    } catch (e) {
+    } catch(e) {
       toast('Run failed: ' + e.message, 'error');
       if (btn) { btn.disabled = false; btn.innerHTML = playIcon + ' Run'; }
     }
   };
 
-  kbHandler = function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); }
-  };
+  kbHandler = e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); } };
   document.addEventListener('keydown', kbHandler);
 }
 
 // ── Logs ───────────────────────────────────────────────────────────────────
 function pageLogs() {
-  logPaused     = false;
-  logAutoScroll = true;
-  logAll        = [];
+  logPaused = false; logAutoScroll = true; logAll = [];
 
   setView(
     '<div class="page-header" style="margin-bottom:10px">' +
@@ -788,97 +970,108 @@ function pageLogs() {
       '<div class="btn-row">' +
         '<span class="level-sel-label">Server level:</span>' +
         '<select id="srv-level" class="level-sel">' +
-          '<option value="DEBUG">DEBUG</option>' +
-          '<option value="INFO">INFO</option>' +
-          '<option value="WARN">WARN</option>' +
-          '<option value="ERROR">ERROR</option>' +
+          ['DEBUG','INFO','WARN','ERROR'].map(l => '<option value="' + l + '">' + l + '</option>').join('') +
         '</select>' +
         '<button class="btn btn-ghost btn-sm" id="pause-btn">Pause</button>' +
         '<button class="btn btn-ghost btn-sm" id="clear-btn">Clear</button>' +
       '</div>' +
     '</div>' +
     '<div class="log-toolbar">' +
-      '<span class="level-sel-label" style="margin-right:2px">Show:</span>' +
-      ['DEBUG','INFO','WARN','ERROR'].map(function(l) {
-        return '<button class="lvl-btn lvl-' + l + '" data-level="' + l + '">' + l + '</button>';
-      }).join('') +
+      '<div class="btn-row" style="margin-right:4px">' +
+        '<span class="conn-dot" id="conn-dot"></span>' +
+        '<span class="level-sel-label" id="conn-label">Connecting…</span>' +
+      '</div>' +
+      '<span class="level-sel-label" style="margin-left:8px;margin-right:4px">Show:</span>' +
+      ['DEBUG','INFO','WARN','ERROR'].map(l =>
+        '<button class="lvl-btn lvl-' + l + '" data-level="' + l + '">' + l + '</button>'
+      ).join('') +
     '</div>' +
     '<div class="log-box" id="log-box"></div>'
   );
 
-  // Fetch current server log level and pre-select it.
-  api('GET', '/api/log-level').then(function(d) {
-    var sel = $('srv-level');
+  api('GET', '/api/log-level').then(d => {
+    const sel = $('srv-level');
     if (sel && d && d.level) sel.value = d.level;
-  }).catch(function() {});
+  }).catch(() => {});
 
   $('srv-level').onchange = function() {
-    var level = this.value;
-    api('PUT', '/api/log-level', { level: level }).catch(function(e) {
-      toast('Failed to set log level: ' + e.message, 'error');
-    });
+    api('PUT', '/api/log-level', { level: this.value })
+      .catch(e => toast('Failed to set log level: ' + e.message, 'error'));
   };
 
-  var box = $('log-box');
+  const box = $('log-box');
 
   function appendEntry(e) {
     if (!logLevels.has(e.level)) return;
-    var row = document.createElement('div');
-    row.className     = 'log-entry';
+    const row = document.createElement('div');
+    row.className = 'log-entry';
     row.dataset.level = e.level;
-    var attrs = (e.attrs || []).map(function(a) { return a.k + '=' + a.v; }).join('  ');
+    const attrs = (e.attrs || []).map(a =>
+      '<span class="l-attr"><span class="l-attr-key">' + esc(a.k) + '=</span>' + esc(a.v) + '</span>'
+    ).join('');
     row.innerHTML =
-      '<span class="l-time">'           + fmtLogTime(e.time) + '</span>' +
-      '<span class="l-level l-' + e.level + '">' + e.level + '</span>' +
-      '<span class="l-msg">'            + e.msg + '</span>' +
-      (attrs ? '<span class="l-attrs">' + attrs + '</span>' : '');
+      '<span class="l-time">'                         + fmtLogTime(e.time) + '</span>' +
+      '<span class="l-level l-' + e.level + '">' + e.level    + '</span>' +
+      '<span class="l-msg">'                          + esc(e.msg) + '</span>' +
+      (attrs ? '<span>' + attrs + '</span>' : '');
     box.appendChild(row);
     if (logAutoScroll) box.scrollTop = box.scrollHeight;
   }
 
-  document.querySelectorAll('.lvl-btn').forEach(function(btn) {
-    var lv = btn.dataset.level;
+  document.querySelectorAll('.lvl-btn').forEach(btn => {
+    const lv = btn.dataset.level;
     if (!logLevels.has(lv)) btn.classList.add('off');
-    btn.onclick = function() {
+    btn.onclick = () => {
       if (logLevels.has(lv)) { logLevels.delete(lv); btn.classList.add('off'); }
       else                   { logLevels.add(lv);    btn.classList.remove('off'); }
       box.innerHTML = '';
-      logAll.forEach(function(e) { appendEntry(e); });
+      logAll.forEach(e => appendEntry(e));
     };
   });
 
-  $('pause-btn').onclick = function() {
-    logPaused     = !logPaused;
-    logAutoScroll = !logPaused;
+  $('pause-btn').onclick = () => {
+    logPaused = !logPaused; logAutoScroll = !logPaused;
     $('pause-btn').textContent = logPaused ? 'Resume' : 'Pause';
-    if (!logPaused) {
-      box.innerHTML = '';
-      logAll.forEach(function(e) { appendEntry(e); });
-      box.scrollTop = box.scrollHeight;
-    }
+    if (!logPaused) { box.innerHTML = ''; logAll.forEach(e => appendEntry(e)); box.scrollTop = box.scrollHeight; }
   };
 
-  $('clear-btn').onclick = function() { logAll = []; box.innerHTML = ''; };
+  $('clear-btn').onclick = () => { logAll = []; box.innerHTML = ''; };
 
-  box.addEventListener('scroll', function() {
+  box.addEventListener('scroll', () => {
     logAutoScroll = box.scrollTop + box.clientHeight >= box.scrollHeight - 24;
   });
 
   logES = new EventSource('/api/logs/stream');
-  logES.onmessage = function(ev) {
-    var e = JSON.parse(ev.data);
+  logES.onopen = () => {
+    const dot = $('conn-dot'); const lbl = $('conn-label');
+    if (dot) dot.classList.add('live');
+    if (lbl) lbl.textContent = 'Live';
+  };
+  logES.onerror = () => {
+    const dot = $('conn-dot'); const lbl = $('conn-label');
+    if (dot) dot.classList.remove('live');
+    if (lbl) lbl.textContent = 'Disconnected';
+  };
+  logES.onmessage = ev => {
+    const e = JSON.parse(ev.data);
     logAll.push(e);
     if (!logPaused) appendEntry(e);
   };
-  logES.onerror = function() {};
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+let appSchedule = '';
 initTheme();
-fetch('/api/config').then(function(r) { return r.json(); }).then(function(c) {
-  appUrl = c.app_url;
-}).catch(function() {});
-
+fetch('/api/config').then(r => r.json()).then(c => {
+  appUrl = c.app_url || appUrl;
+  appSchedule = c.schedule || '';
+  if (appSchedule) {
+    const el = $('sidebar-schedule');
+    const txt = $('sidebar-schedule-text');
+    if (el) el.style.display = 'flex';
+    if (txt) txt.textContent = appSchedule;
+  }
+}).catch(() => {});
 route();
 </script>
 </body>
