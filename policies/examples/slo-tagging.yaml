@@ -8,6 +8,8 @@ policies:
         op: absent
     actions:
       - type: report
+      - type: notify
+        channel: "#leash"
       - type: tag
         tags:
           - "leash:missing-team"

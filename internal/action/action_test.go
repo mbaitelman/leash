@@ -2,9 +2,12 @@ package action_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mbaitelman/leash/internal/action"
@@ -250,15 +253,14 @@ func TestNotifyAction_DryRun_NoHTTP(t *testing.T) {
 	factory, _ := action.Get("notify")
 	act, _ := factory(map[string]any{"type": "notify", "webhook_url": "http://invalid.invalid"})
 
-	r := resource("abc", nil)
-	// dry-run should not attempt any HTTP call
+	r := resource("abc", map[string]any{"name": "my-monitor"})
 	if err := act.Execute(context.Background(), r, true); err != nil {
 		t.Errorf("Execute dry-run: %v", err)
 	}
 }
 
 func TestNotifyAction_MissingWebhookLive(t *testing.T) {
-	t.Setenv("SLACK_WEBHOOK_URL", "") // ensure env is cleared
+	t.Setenv("SLACK_WEBHOOK_URL", "")
 	factory, _ := action.Get("notify")
 	act, _ := factory(map[string]any{"type": "notify"})
 
@@ -269,13 +271,10 @@ func TestNotifyAction_MissingWebhookLive(t *testing.T) {
 	}
 }
 
-func TestNotifyAction_PostsToWebhook(t *testing.T) {
-	var receivedBody []byte
+func TestNotifyAction_PayloadIsSlackAttachment(t *testing.T) {
+	var body []byte
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Body.Read(make([]byte, 0))
-		buf := make([]byte, 4096)
-		n, _ := r.Body.Read(buf)
-		receivedBody = buf[:n]
+		body, _ = io.ReadAll(r.Body)
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer srv.Close()
@@ -283,11 +282,77 @@ func TestNotifyAction_PostsToWebhook(t *testing.T) {
 	factory, _ := action.Get("notify")
 	act, _ := factory(map[string]any{"type": "notify", "webhook_url": srv.URL})
 
-	res := resource("abc", nil)
+	res := resource("mon-123", map[string]any{
+		"name":          "High error rate",
+		"overall_state": "Alert",
+		"tags":          []string{"env:prod", "team:platform"},
+	})
+	res.resType = "datadog.monitor"
+
 	if err := act.Execute(context.Background(), res, false); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	_ = receivedBody // request was received; no error is the assertion
+
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		t.Fatalf("payload is not valid JSON: %v\n%s", err, body)
+	}
+
+	attachments, ok := payload["attachments"].([]any)
+	if !ok || len(attachments) == 0 {
+		t.Fatalf("expected attachments array, got: %s", body)
+	}
+	att := attachments[0].(map[string]any)
+
+	if att["color"] != "warning" {
+		t.Errorf("expected color=warning, got %v", att["color"])
+	}
+	text, _ := att["text"].(string)
+	if !strings.Contains(text, "mon-123") {
+		t.Errorf("expected resource ID in text, got: %s", text)
+	}
+	if !strings.Contains(text, "High error rate") {
+		t.Errorf("expected resource name in text, got: %s", text)
+	}
+
+	fields, _ := att["fields"].([]any)
+	var fieldTitles []string
+	for _, f := range fields {
+		fm := f.(map[string]any)
+		fieldTitles = append(fieldTitles, fm["title"].(string))
+	}
+	for _, want := range []string{"Resource", "Status", "Tags"} {
+		found := false
+		for _, got := range fieldTitles {
+			if got == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected field %q in attachment fields %v", want, fieldTitles)
+		}
+	}
+}
+
+func TestNotifyAction_NoNameFallsBackGracefully(t *testing.T) {
+	var body []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	factory, _ := action.Get("notify")
+	act, _ := factory(map[string]any{"type": "notify", "webhook_url": srv.URL})
+
+	res := resource("dash-456", map[string]any{}) // no name/title/email
+	if err := act.Execute(context.Background(), res, false); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if len(body) == 0 {
+		t.Error("expected non-empty payload")
+	}
 }
 
 func TestNotifyAction_WebhookNon2xx_ReturnsError(t *testing.T) {
@@ -300,8 +365,7 @@ func TestNotifyAction_WebhookNon2xx_ReturnsError(t *testing.T) {
 	act, _ := factory(map[string]any{"type": "notify", "webhook_url": srv.URL})
 
 	r := resource("abc", nil)
-	err := act.Execute(context.Background(), r, false)
-	if err == nil {
+	if err := act.Execute(context.Background(), r, false); err == nil {
 		t.Error("expected error for 5xx response")
 	}
 }
