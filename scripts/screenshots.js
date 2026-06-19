@@ -1,12 +1,31 @@
-// Spins up a mock API server, opens each page with Playwright, saves PNGs.
-// Run: node scripts/screenshots.js  (requires @playwright/test installed)
+/**
+ * Take UI screenshots for the README and docs.
+ *
+ * Usage (run from the repo root):
+ *
+ *   # With Docker (no local Node/Playwright needed):
+ *   docker run --rm \
+ *     -v $(pwd):/workspace -w /workspace \
+ *     mcr.microsoft.com/playwright:v1.61.0-jammy \
+ *     sh -c "npm install playwright@1.61.0 && node scripts/screenshots.js"
+ *
+ *   # With local Node (requires: npm install playwright@1.61.0):
+ *   node scripts/screenshots.js
+ *
+ * Output: docs/screenshots/<page>-{light,dark}.png  (10 files total)
+ *
+ * The script spins up a lightweight mock HTTP server on port 3001 that serves
+ * the built index.html and returns canned API responses — no Datadog credentials
+ * or running leash server required.
+ */
 const http = require('http');
 const fs   = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const HTML = fs.readFileSync(path.join(__dirname, '../internal/server/web/index.html'), 'utf8');
-const LOGO = fs.readFileSync(path.join(__dirname, '../internal/server/web/logo.svg'));
+const ROOT = path.join(__dirname, '..');
+const HTML = fs.readFileSync(path.join(ROOT, 'internal/server/web/index.html'), 'utf8');
+const LOGO = fs.readFileSync(path.join(ROOT, 'internal/server/web/logo.svg'));
 
 const NOW = new Date().toISOString();
 function ago(min) { return new Date(Date.now() - min * 60000).toISOString(); }
@@ -133,7 +152,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(404); res.end('not found');
 });
 
-const OUT = path.join(__dirname, '../docs/screenshots');
+const OUT = path.join(ROOT, 'docs/screenshots');
 fs.mkdirSync(OUT, { recursive: true });
 
 (async () => {

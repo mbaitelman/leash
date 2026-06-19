@@ -568,8 +568,8 @@ async function pageOverview() {
       }
     }
 
-    const totalMatches = runs ? runs.reduce((s, r) => s + r.total_matches, 0) : 0;
     const lastRun = runs && runs.length > 0 ? runs[0] : null;
+    const lastRunMatches = lastRun ? lastRun.total_matches : 0;
     const policyCount = lastRun ? lastRun.policy_count : 0;
 
     const statsEl = $('ov-stats');
@@ -579,12 +579,12 @@ async function pageOverview() {
         'Total Runs', runs ? runs.length : 0,
         runs && runs.length > 0 ? 'last ' + relative(lastRun.generated_at) : 'No runs yet'
       ) +
-      statCard(totalMatches > 0 ? 'si-er' : 'si-ok',
-        totalMatches > 0
+      statCard(lastRunMatches > 0 ? 'si-er' : 'si-ok',
+        lastRunMatches > 0
           ? '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="7.5" r="6"/><line x1="7.5" y1="4.5" x2="7.5" y2="7.5"/><circle cx="7.5" cy="10" r=".5" fill="currentColor" stroke="none"/></svg>'
           : '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="2,8 5.5,11.5 13,4"/></svg>',
-        'Violations', totalMatches,
-        totalMatches > 0 ? 'across all runs' : 'all clean'
+        'Violations', lastRunMatches,
+        lastRunMatches > 0 ? 'in last run' : 'all clean'
       ) +
       statCard('si-neu',
         '<svg width="16" height="16" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 1h6l4 4v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/><polyline points="9,1 9,5 13,5"/></svg>',
@@ -610,11 +610,10 @@ async function pageOverview() {
       return;
     }
 
-    // update badge
-    const anyMatches = runs.find(r => r.total_matches > 0);
-    if (anyMatches) {
+    // update badge — last run only
+    if (lastRun && lastRun.total_matches > 0) {
       const nb = $('nav-badge-runs');
-      if (nb) { nb.textContent = anyMatches.total_matches; nb.style.display = ''; }
+      if (nb) { nb.textContent = lastRun.total_matches; nb.style.display = ''; }
     }
 
     tbody.innerHTML = runs.slice(0, 5).map(r => runRow(r)).join('');
