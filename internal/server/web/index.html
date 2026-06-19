@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function(){var t=localStorage.getItem('leash-theme')||
+      (window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+      document.documentElement.setAttribute('data-theme',t);})();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leash</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sb:   #14142b;
+      --bg:   #f1f4f9;
+      --sur:  #ffffff;
+      --bd:   #e2e8ef;
+      --tx:   #1a1a2e;
+      --mu:   #6b7280;
+      --ac:   #7b42bc;
+      --ach:  #6433a4;
+      --ok:   #059669;
+      --er:   #dc2626;
+      --wn:   #d97706;
+      --car:  #f8fafc;
+      --car-h:#f0f4f8;
+      --hov:  #fafbfc;
+      --log-bg:   #f6f8fa;
+      --log-tx:   #24292f;
+      --log-mu:   #57606a;
+      --log-time: #6b7280;
+      --log-dbg:  #6b7280;
+      --log-info: #0550ae;
+      --log-warn: #953800;
+      --log-err:  #cf222e;
+      --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    }
+    html, body { height: 100%; }
+    body { font-family: var(--font); background: var(--bg); color: var(--tx); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
+
+    /* Layout */
+    .app { display: flex; height: 100vh; }
+    .sidebar { width: 200px; flex-shrink: 0; background: var(--sb); display: flex; flex-direction: column; }
+    .main { flex: 1; overflow-y: auto; background: var(--bg); }
+    .page { padding: 28px 32px; max-width: 960px; }
+
+    /* Sidebar */
+    .brand { padding: 14px 14px 12px; font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px; }
+    .brand-logo { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: block; }
+    .nav-section { padding: 6px 8px; flex: 1; }
+    .nav-link { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 6px; color: rgba(255,255,255,0.55); font-size: 13.5px; cursor: pointer; transition: background .12s, color .12s; user-select: none; }
+    .nav-link:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+    .nav-link.active { background: rgba(123,66,188,0.22); color: #fff; }
+    .nav-link svg { opacity: .8; flex-shrink: 0; }
+    .nav-link.active svg { opacity: 1; }
+
+    /* Page header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+    .page-title { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .btn-row { display: flex; align-items: center; gap: 8px; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: background .12s, opacity .12s; line-height: 1; white-space: nowrap; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: var(--ac); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--ach); }
+    .btn-ghost { background: transparent; color: var(--mu); border: 1px solid var(--bd); }
+    .btn-ghost:hover:not(:disabled) { background: var(--sur); color: var(--tx); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .dry-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mu); cursor: pointer; }
+    .dry-check input { accent-color: var(--ac); cursor: pointer; }
+
+    /* Back link */
+    .back-link { display: inline-flex; align-items: center; gap: 5px; color: var(--mu); font-size: 13px; margin-bottom: 14px; cursor: pointer; transition: color .12s; }
+    .back-link:hover { color: var(--tx); }
+
+    /* Card */
+    .card { background: var(--sur); border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; }
+
+    /* Table */
+    .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .table th { text-align: left; padding: 9px 16px; font-size: 11px; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--bd); white-space: nowrap; }
+    .table td { padding: 11px 16px; border-bottom: 1px solid var(--bd); vertical-align: middle; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr.clickable { cursor: pointer; }
+    .table tbody tr.clickable:hover td { background: var(--hov); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+    .badge-live { background: #dcfce7; color: #15803d; }
+    .badge-dry  { background: #ede9fe; color: #5b21b6; }
+    .badge-ok   { background: #dcfce7; color: #15803d; }
+    .badge-err  { background: #fee2e2; color: #b91c1c; }
+    .badge-neu  { background: #f3f4f6; color: #374151; }
+
+    /* Run meta row */
+    .run-meta { display: flex; gap: 28px; margin-bottom: 22px; flex-wrap: wrap; }
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-label { font-size: 10.5px; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .06em; }
+    .meta-value { font-size: 15px; font-weight: 600; }
+
+    /* Section labels */
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+    .sl-err { color: var(--er); }
+    .sl-ok  { color: var(--ok); }
+    .mt12 { margin-top: 12px; }
+    .mt20 { margin-top: 20px; }
+
+    /* Match cards */
+    .match-card { margin: 8px 16px 12px; background: var(--car); border: 1px solid var(--bd); border-radius: 6px; overflow: hidden; }
+    .match-card.passing { border-left: 3px solid var(--ok); }
+    .match-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--car-h); border-bottom: 1px solid var(--bd); }
+    .match-name { font-weight: 600; font-size: 13.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .match-id { font-family: var(--mono); font-size: 11px; color: var(--mu); }
+    .dd-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--ac); white-space: nowrap; flex-shrink: 0; }
+    .dd-link:hover { text-decoration: underline; }
+    .match-body { padding: 10px 14px; }
+    .props-table { font-size: 12px; border-collapse: collapse; width: 100%; margin-bottom: 6px; }
+    .props-table td { padding: 2px 8px 2px 0; vertical-align: top; }
+    .props-table td:first-child { font-family: var(--mono); color: var(--mu); width: 130px; }
+    .props-table td:last-child  { font-family: var(--mono); word-break: break-all; }
+    .action-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+
+    /* Match count bubble */
+    .match-bubble { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .bubble-0   { background: #f3f4f6; color: var(--mu); }
+    .bubble-pos { background: #fee2e2; color: var(--er); }
+
+    /* Policy editor */
+    .editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+    .editor-filename { font-size: 18px; font-weight: 700; }
+    .save-status { font-size: 12px; color: var(--mu); }
+    .save-status.dirty { color: var(--wn); }
+    .save-status.saved { color: var(--ok); }
+    /* CodeMirror container */
+    .cm-wrap { border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; transition: border-color .12s, box-shadow .12s; }
+    .cm-wrap.focused { border-color: var(--ac); box-shadow: 0 0 0 3px rgba(123,66,188,.1); }
+    .cm-wrap .CodeMirror { height: calc(100vh - 210px); font-family: var(--mono); font-size: 13px; line-height: 1.65; border-radius: 8px; background: var(--sur); color: var(--tx); }
+    .cm-wrap .CodeMirror-scroll { border-radius: 8px; }
+    [data-theme="dark"] .cm-wrap .CodeMirror { background: #282a36; color: #f8f8f2; }
+
+    /* Server log-level selector */
+    .level-sel { padding: 4px 8px; border: 1px solid var(--bd); border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--tx); background: var(--sur); cursor: pointer; outline: none; font-family: var(--font); }
+    .level-sel:focus { border-color: var(--ac); }
+    .level-sel-label { font-size: 12px; color: var(--mu); white-space: nowrap; }
+
+    /* Logs */
+    .log-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .lvl-btn { padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: opacity .12s; }
+    .lvl-btn.off { opacity: .35; }
+    .lvl-DEBUG { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+    .lvl-INFO  { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .lvl-WARN  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .lvl-ERROR { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+    .log-box { font-family: var(--mono); font-size: 12px; background: var(--log-bg); color: var(--log-tx); border-radius: 8px; padding: 12px 16px; overflow-y: auto; height: calc(100vh - 218px); }
+    .log-entry { display: flex; gap: 12px; padding: 1.5px 0; line-height: 1.5; }
+    .log-entry:hover { background: rgba(128,128,128,.08); border-radius: 3px; }
+    .l-time  { color: var(--log-time); min-width: 88px; flex-shrink: 0; }
+    .l-level { min-width: 48px; font-weight: 700; flex-shrink: 0; }
+    .l-INFO  { color: var(--log-info); }
+    .l-WARN  { color: var(--log-warn); }
+    .l-ERROR { color: var(--log-err); }
+    .l-DEBUG { color: var(--log-dbg); }
+    .l-msg   { flex: 1; color: var(--log-tx); }
+    .l-attrs { color: var(--log-mu); }
+
+    /* Dark mode */
+    [data-theme="dark"] {
+      --log-bg:   #0d1117;
+      --log-tx:   #c9d1d9;
+      --log-mu:   #6e7681;
+      --log-time: #484f58;
+      --log-dbg:  #484f58;
+      --log-info: #58a6ff;
+      --log-warn: #e3b341;
+      --log-err:  #f85149;
+      --sb:   #0c0c1f;
+      --bg:   #0f0f1e;
+      --sur:  #171727;
+      --bd:   #2a2a4a;
+      --tx:   #e2e6f0;
+      --mu:   #8892a8;
+      --ac:   #9b5de5;
+      --ach:  #8a4dd0;
+      --ok:   #10b981;
+      --er:   #f87171;
+      --wn:   #fbbf24;
+      --car:  #1c1c32;
+      --car-h:#222242;
+      --hov:  #1c1c32;
+    }
+    [data-theme="dark"] .badge-live { background: #064e3b; color: #34d399; }
+    [data-theme="dark"] .badge-dry  { background: #2e1065; color: #a78bfa; }
+    [data-theme="dark"] .badge-ok   { background: #064e3b; color: #34d399; }
+    [data-theme="dark"] .badge-err  { background: #450a0a; color: #f87171; }
+    [data-theme="dark"] .badge-neu  { background: #1f2937; color: #9ca3af; }
+    [data-theme="dark"] .bubble-0   { background: #1f2937; color: var(--mu); }
+    [data-theme="dark"] .bubble-pos { background: #450a0a; color: #f87171; }
+    [data-theme="dark"] .lvl-DEBUG  { background: #1f2937; color: #9ca3af; border-color: #374151; }
+
+    /* Theme toggle */
+    .sidebar-bottom { padding: 10px 8px; border-top: 1px solid rgba(255,255,255,.07); }
+    .theme-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; border: none; background: transparent; color: rgba(255,255,255,.45); cursor: pointer; transition: background .12s, color .12s; }
+    .theme-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 48px 16px; color: var(--mu); }
+    .empty-title { font-size: 15px; font-weight: 600; color: var(--tx); margin-bottom: 5px; }
+    .empty-sub   { font-size: 13px; }
+
+    /* Toast */
+    #toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+    .toast { padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 14px rgba(0,0,0,.18); max-width: 320px; animation: fadeUp .18s; }
+    .toast-info    { background: #1e40af; color: #fff; }
+    .toast-success { background: var(--ok); color: #fff; }
+    .toast-error   { background: var(--er); color: #fff; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Misc */
+    .spin { animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mono { font-family: var(--mono); }
+    .muted { color: var(--mu); font-size: 12px; }
+    .fw { font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><img src="/logo.svg" class="brand-logo" alt="Leash logo">Leash</div>
+    <div class="nav-section">
+      <a class="nav-link" href="#/runs" id="nl-runs" onclick="navClick(event,'#/runs')">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <line x1="1.5" y1="3.5" x2="13.5" y2="3.5"/>
+          <line x1="1.5" y1="7.5" x2="13.5" y2="7.5"/>
+          <line x1="1.5" y1="11.5" x2="13.5" y2="11.5"/>
+        </svg>
+        Runs
+      </a>
+      <a class="nav-link" href="#/policies" id="nl-policies" onclick="navClick(event,'#/policies')">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 1h6l4 4v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+          <polyline points="9,1 9,5 13,5"/>
+          <line x1="4" y1="8" x2="11" y2="8"/>
+          <line x1="4" y1="11" x2="8.5" y2="11"/>
+        </svg>
+        Policies
+      </a>
+      <a class="nav-link" href="#/logs" id="nl-logs" onclick="navClick(event,'#/logs')">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="2" width="13" height="11" rx="1.5"/>
+          <polyline points="4,6 7,8.5 4,11"/>
+          <line x1="8" y1="11" x2="11" y2="11"/>
+        </svg>
+        Logs
+      </a>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark mode"></button>
+    </div>
+  </aside>
+  <main class="main">
+    <div id="view" class="page"></div>
+  </main>
+</div>
+<div id="toasts"></div>
+
+<script>
+// ── Theme ──────────────────────────────────────────────────────────────────
+var moonIcon = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5a6 6 0 1 1-7.5-7.5A7 7 0 1 0 13 9.5z"/></svg>';
+var sunIcon  = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="7.5" r="2.5"/><line x1="7.5" y1="1" x2="7.5" y2="3"/><line x1="7.5" y1="12" x2="7.5" y2="14"/><line x1="1" y1="7.5" x2="3" y2="7.5"/><line x1="12" y1="7.5" x2="14" y2="7.5"/><line x1="3.05" y1="3.05" x2="4.46" y2="4.46"/><line x1="10.54" y1="10.54" x2="11.95" y2="11.95"/><line x1="10.54" y1="4.46" x2="11.95" y2="3.05"/><line x1="3.05" y1="11.95" x2="4.46" y2="10.54"/></svg>';
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  var btn = document.getElementById('theme-btn');
+  if (btn) btn.innerHTML = t === 'dark' ? sunIcon : moonIcon;
+  if (activeEditor) activeEditor.setOption('theme', t === 'dark' ? 'dracula' : 'default');
+}
+function initTheme() {
+  var saved = localStorage.getItem('leash-theme');
+  setTheme(saved || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'));
+}
+function toggleTheme() {
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('leash-theme', next);
+  setTheme(next);
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let appUrl = 'https://app.datadoghq.com';
+let logES = null;
+let logAll = [];
+let logLevels = new Set(['DEBUG','INFO','WARN','ERROR']);
+let logPaused = false;
+let logAutoScroll = true;
+let editorDirty = false;
+let kbHandler = null;
+let activeEditor = null;
+
+// ── Router ─────────────────────────────────────────────────────────────────
+function navClick(e, hash) {
+  e.preventDefault();
+  if (editorDirty && !confirm('You have unsaved changes. Leave without saving?')) return;
+  editorDirty = false;
+  location.hash = hash;
+}
+
+function cleanup() {
+  if (logES)      { logES.close(); logES = null; }
+  if (kbHandler)  { document.removeEventListener('keydown', kbHandler); kbHandler = null; }
+  activeEditor = null;
+}
+
+function route() {
+  const h = location.hash || '#/runs';
+  cleanup();
+  document.getElementById('nl-runs').classList.toggle('active',
+    h === '#/runs' || h.startsWith('#/runs/'));
+  document.getElementById('nl-policies').classList.toggle('active',
+    h === '#/policies' || h.startsWith('#/policies/'));
+  document.getElementById('nl-logs').classList.toggle('active', h === '#/logs');
+
+  if      (h === '#/runs')              pageRunsList();
+  else if (h.startsWith('#/runs/'))     pageRunDetail(h.slice(7));
+  else if (h === '#/policies')          pagePoliciesList();
+  else if (h.startsWith('#/policies/')) pagePolicyEditor(decodeURIComponent(h.slice(11)));
+  else if (h === '#/logs')              pageLogs();
+  else                                  pageRunsList();
+}
+
+window.addEventListener('hashchange', route);
+
+// ── API ────────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(e.error || r.statusText);
+  }
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const setView = html => { $('view').innerHTML = html; };
+
+function toast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  $('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function relative(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (s < 60)    return 'just now';
+  if (s < 3600)  return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleString('en-US',
+    { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+}
+
+function fmtLogTime(d) {
+  const dt = new Date(d);
+  return dt.toTimeString().slice(0,8) + '.' + String(dt.getMilliseconds()).padStart(3,'0');
+}
+
+function fmtSize(b) {
+  return b < 1024 ? b + ' B' : (b/1024).toFixed(1) + ' KB';
+}
+
+function resName(props) {
+  return (props && (props.name || props.title || props.email)) || '—';
+}
+
+function ddLink(type, id) {
+  if (!id) return null;
+  switch (type) {
+    case 'datadog.monitor':   return appUrl + '/monitors/' + id;
+    case 'datadog.slo':       return appUrl + '/slo?slo_id=' + id;
+    case 'datadog.synthetic': return appUrl + '/synthetics/details/' + id;
+    case 'datadog.dashboard': return appUrl + '/dashboard/' + id;
+    case 'datadog.user':      return appUrl + '/organization-settings/users';
+    default:                  return null;
+  }
+}
+
+function dispProp(v) {
+  if (v === null || v === undefined) return '';
+  if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+const extIcon = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4.5 2H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.5"/><path d="M7 1h3v3M9 1 5.5 4.5"/></svg>';
+const chevLeft = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="9,2 4,7 9,12"/></svg>';
+const playIcon = '<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>';
+
+// ── Runs list ──────────────────────────────────────────────────────────────
+async function pageRunsList() {
+  setView(
+    '<div class="page-header">' +
+      '<h1 class="page-title">Runs</h1>' +
+      '<div class="btn-row">' +
+        '<label class="dry-check"><input type="checkbox" id="dry-chk" checked> Dry run</label>' +
+        '<button class="btn btn-primary" id="run-btn">' + playIcon + ' Run Now</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<table class="table"><thead><tr>' +
+        '<th>Time</th><th>Mode</th><th>Policies</th><th>Matches</th><th>Run ID</th>' +
+      '</tr></thead>' +
+      '<tbody id="runs-body">' +
+        '<tr><td colspan="5"><div class="empty"><span class="spin">&#9675;</span></div></td></tr>' +
+      '</tbody></table>' +
+    '</div>'
+  );
+
+  $('run-btn').onclick = () => doRun(null, 'run-btn', 'dry-chk');
+
+  try {
+    const runs = await api('GET', '/api/runs');
+    const body = $('runs-body');
+    if (!body) return;
+    if (!runs || runs.length === 0) {
+      body.innerHTML =
+        '<tr><td colspan="5"><div class="empty">' +
+          '<div class="empty-title">No runs yet</div>' +
+          '<div class="empty-sub">Click "Run Now" to evaluate your policies against Datadog.</div>' +
+        '</div></td></tr>';
+      return;
+    }
+    body.innerHTML = runs.map(function(r) {
+      var mc = r.total_matches > 0;
+      return '<tr class="clickable" onclick="location.hash=\'#/runs/' + r.run_id + '\'">' +
+        '<td>' +
+          '<div class="fw">' + fmtDate(r.generated_at) + '</div>' +
+          '<div class="muted">' + relative(r.generated_at) + '</div>' +
+        '</td>' +
+        '<td><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' +
+          (r.dry_run ? 'Dry Run' : 'Live') + '</span></td>' +
+        '<td>' + r.policy_count + '</td>' +
+        '<td style="font-weight:' + (mc ? 700 : 400) + ';color:' + (mc ? 'var(--er)' : 'inherit') + '">' + r.total_matches + '</td>' +
+        '<td class="mono muted">' + r.run_id.slice(0,8) + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    var body = $('runs-body');
+    if (body) body.innerHTML =
+      '<tr><td colspan="5"><div class="empty">' +
+        '<div class="empty-title">Failed to load runs</div>' +
+        '<div class="empty-sub">' + e.message + '</div>' +
+      '</div></td></tr>';
+  }
+}
+
+async function doRun(policyPath, btnId, dryChkId) {
+  var dry = $(dryChkId) ? $(dryChkId).checked : true;
+  var btn = $(btnId);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">&#9675;</span> Running…'; }
+  try {
+    var body = { dry_run: dry };
+    if (policyPath) body.policy_path = policyPath;
+    var report = await api('POST', '/api/runs', body);
+    var total = report.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
+    toast('Run complete — ' + total + ' match' + (total === 1 ? '' : 'es') + ' found', total > 0 ? 'info' : 'success');
+    location.hash = '#/runs/' + report.run_id;
+  } catch (e) {
+    toast('Run failed: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = playIcon + ' Run Now'; }
+  }
+}
+
+// ── Run detail ─────────────────────────────────────────────────────────────
+async function pageRunDetail(id) {
+  setView(
+    '<a class="back-link" href="#/runs" onclick="navClick(event,\'#/runs\')">' + chevLeft + ' Runs</a>' +
+    '<div id="run-detail"><div class="empty"><span class="spin">&#9675;</span></div></div>'
+  );
+
+  try {
+    var r = await api('GET', '/api/runs/' + id);
+    var totalMatches = r.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
+    var totalPassing = r.policies.reduce(function(s, p) { return s + (p.pass_count || 0); }, 0);
+    var matchPols = r.policies.filter(function(p) { return p.match_count > 0; });
+    var cleanPols = r.policies.filter(function(p) { return p.match_count === 0; });
+
+    function passCardHTML(m, resourceType) {
+      var name = resName(m.properties);
+      var link = ddLink(resourceType, m.id);
+      var priority = ['name','title','email','type','status','sli_type','slo_type'];
+      var entries = Object.entries(m.properties || {}).filter(function(kv) { return kv[0] !== 'raw'; });
+      var sorted = entries.filter(function(kv) { return priority.indexOf(kv[0]) >= 0; })
+        .concat(entries.filter(function(kv) { return priority.indexOf(kv[0]) < 0; }))
+        .slice(0, 14);
+      var propRows = sorted.map(function(kv) {
+        var d = dispProp(kv[1]);
+        return '<tr><td>' + kv[0] + '</td><td>' + (d.length > 140 ? d.slice(0,140) + '…' : d) + '</td></tr>';
+      }).join('');
+      return '<div class="match-card passing">' +
+        '<div class="match-header">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="match-name">' + name + '</div>' +
+            '<div class="match-id">' + m.id + '</div>' +
+          '</div>' +
+          (link ? '<a class="dd-link" href="' + link + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
+        '</div>' +
+        (propRows ? '<div class="match-body"><table class="props-table"><tbody>' + propRows + '</tbody></table></div>' : '') +
+      '</div>';
+    }
+
+    function matchCardHTML(m, resourceType, pol) {
+      var name = resName(m.properties);
+      var link = ddLink(resourceType, m.id);
+      var priority = ['name','title','email','type','status','sli_type','slo_type'];
+      var entries = Object.entries(m.properties || {}).filter(function(kv) { return kv[0] !== 'raw'; });
+      var sorted = entries.filter(function(kv) { return priority.indexOf(kv[0]) >= 0; })
+        .concat(entries.filter(function(kv) { return priority.indexOf(kv[0]) < 0; }))
+        .slice(0, 14);
+
+      var propRows = sorted.map(function(kv) {
+        var d = dispProp(kv[1]);
+        return '<tr><td>' + kv[0] + '</td><td>' + (d.length > 140 ? d.slice(0,140) + '…' : d) + '</td></tr>';
+      }).join('');
+
+      var acts = (pol.actions_taken || []).filter(function(a) { return a.resource_id === m.id; });
+      var actBadges = acts.map(function(a) {
+        var cls = a.error ? 'badge-err' : 'badge-ok';
+        return '<span class="badge ' + cls + '">' + a.action_type + (a.dry_run ? ' (dry)' : '') + '</span>';
+      }).join('');
+
+      return '<div class="match-card">' +
+        '<div class="match-header">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="match-name">' + name + '</div>' +
+            '<div class="match-id">' + m.id + '</div>' +
+          '</div>' +
+          (link ? '<a class="dd-link" href="' + link + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
+        '</div>' +
+        '<div class="match-body">' +
+          (propRows ? '<table class="props-table"><tbody>' + propRows + '</tbody></table>' : '') +
+          (actBadges ? '<div class="action-badges">' + actBadges + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    function polRows(policies) {
+      return policies.map(function(p) {
+        var bubbCls = p.match_count > 0 ? 'bubble-pos' : 'bubble-0';
+        var matchCards = (p.matches || []).map(function(m) { return matchCardHTML(m, p.resource, p); }).join('');
+        var passCt = p.pass_count || 0;
+        var uid = 'pass-' + p.policy_name.replace(/\W+/g, '-');
+        var passSection = passCt > 0 ?
+          '<div style="padding:6px 16px 4px">' +
+            '<button class="btn btn-ghost btn-sm" onclick="var c=document.getElementById(\'' + uid + '\');c.hidden=!c.hidden;this.textContent=(c.hidden?\'Show \':\'Hide \')+\'' + passCt + ' passing\'">' +
+              'Show ' + passCt + ' passing' +
+            '</button>' +
+          '</div>' +
+          '<div id="' + uid + '" hidden>' +
+            (p.passing || []).map(function(m) { return passCardHTML(m, p.resource); }).join('') +
+          '</div>' : '';
+        var hasContent = matchCards || passSection;
+        return '<tr>' +
+          '<td>' +
+            '<div class="fw" style="margin-bottom:' + (hasContent ? '4px' : '0') + '">' + p.policy_name + '</div>' +
+            matchCards +
+            passSection +
+          '</td>' +
+          '<td class="muted">' + p.resource.replace('datadog.','') + '</td>' +
+          '<td><span class="match-bubble ' + bubbCls + '">' + p.match_count + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    $('run-detail').innerHTML =
+      '<div class="page-header">' +
+        '<h1 class="page-title">Run <span class="mono" style="font-size:15px">' + id.slice(0,8) + '</span></h1>' +
+      '</div>' +
+      '<div class="run-meta">' +
+        '<div class="meta-item"><div class="meta-label">Mode</div>' +
+          '<div class="meta-value"><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' +
+          (r.dry_run ? 'Dry Run' : 'Live') + '</span></div></div>' +
+        '<div class="meta-item"><div class="meta-label">Time</div>' +
+          '<div class="meta-value">' + fmtDate(r.generated_at) + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Policies</div>' +
+          '<div class="meta-value">' + r.policies.length + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Matches</div>' +
+          '<div class="meta-value" style="color:' + (totalMatches > 0 ? 'var(--er)' : 'inherit') + '">' + totalMatches + '</div></div>' +
+        '<div class="meta-item"><div class="meta-label">Passing</div>' +
+          '<div class="meta-value" style="color:var(--ok)">' + totalPassing + '</div></div>' +
+      '</div>' +
+
+      (matchPols.length > 0 ?
+        '<div class="section-label sl-err mt12">' + totalMatches + ' match' + (totalMatches===1?'':'es') + ' found</div>' +
+        '<div class="card">' +
+          '<table class="table"><thead><tr><th>Policy</th><th>Resource</th><th>Matches</th></tr></thead>' +
+          '<tbody>' + polRows(matchPols) + '</tbody></table>' +
+        '</div>' : '') +
+
+      (cleanPols.length > 0 ?
+        '<div class="section-label sl-ok mt20">' + cleanPols.length + ' clean polic' + (cleanPols.length===1?'y':'ies') + '</div>' +
+        '<div class="card">' +
+          '<table class="table"><thead><tr><th>Policy</th><th>Resource</th><th>Matches</th></tr></thead>' +
+          '<tbody>' + polRows(cleanPols) + '</tbody></table>' +
+        '</div>' : '') +
+
+      (r.policies.length === 0 ?
+        '<div class="card"><div class="empty"><div class="empty-title">No policies ran</div></div></div>' : '');
+
+  } catch (e) {
+    $('run-detail').innerHTML =
+      '<div class="empty"><div class="empty-title">Failed to load run</div><div class="empty-sub">' + e.message + '</div></div>';
+  }
+}
+
+// ── Policies list ──────────────────────────────────────────────────────────
+async function pagePoliciesList() {
+  setView(
+    '<div class="page-header"><h1 class="page-title">Policies</h1></div>' +
+    '<div class="card">' +
+      '<table class="table"><thead><tr>' +
+        '<th>File</th><th>Directory</th><th style="text-align:right">Size</th>' +
+      '</tr></thead>' +
+      '<tbody id="pol-body">' +
+        '<tr><td colspan="3"><div class="empty"><span class="spin">&#9675;</span></div></td></tr>' +
+      '</tbody></table>' +
+    '</div>'
+  );
+
+  try {
+    var pols = await api('GET', '/api/policies');
+    var body = $('pol-body');
+    if (!body) return;
+    if (!pols || pols.length === 0) {
+      body.innerHTML =
+        '<tr><td colspan="3"><div class="empty">' +
+          '<div class="empty-title">No policies found</div>' +
+          '<div class="empty-sub">Add YAML files to your policy directories.</div>' +
+        '</div></td></tr>';
+      return;
+    }
+    body.innerHTML = pols.map(function(p) {
+      var parts = p.path.split('/');
+      var file  = parts.pop();
+      var dir   = parts.join('/') || '.';
+      return '<tr class="clickable" onclick="location.hash=\'#/policies/' + encodeURIComponent(p.path) + '\'">' +
+        '<td><span class="fw">' + file + '</span></td>' +
+        '<td class="muted mono">' + dir + '</td>' +
+        '<td class="muted" style="text-align:right">' + fmtSize(p.size) + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    var body2 = $('pol-body');
+    if (body2) body2.innerHTML =
+      '<tr><td colspan="3"><div class="empty">' +
+        '<div class="empty-title">Error</div><div class="empty-sub">' + e.message + '</div>' +
+      '</div></td></tr>';
+  }
+}
+
+// ── Policy editor ──────────────────────────────────────────────────────────
+async function pagePolicyEditor(path) {
+  editorDirty = false;
+  var parts    = path.split('/');
+  var filename = parts[parts.length - 1];
+
+  setView(
+    '<a class="back-link" href="#/policies" onclick="navClick(event,\'#/policies\')">' + chevLeft + ' Policies</a>' +
+    '<div class="editor-header">' +
+      '<div class="editor-filename">' + filename + '</div>' +
+      '<div class="btn-row">' +
+        '<span class="save-status" id="save-status"></span>' +
+        '<label class="dry-check"><input type="checkbox" id="ed-dry" checked> Dry run</label>' +
+        '<button class="btn btn-ghost btn-sm" id="run-pol-btn">' + playIcon + ' Run</button>' +
+        '<button class="btn btn-primary btn-sm" id="save-btn">Save</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cm-wrap" id="editor-ta"></div>'
+  );
+
+  var cmTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dracula' : 'default';
+  var cm = CodeMirror($('editor-ta'), {
+    mode: 'yaml',
+    theme: cmTheme,
+    lineNumbers: true,
+    tabSize: 2,
+    indentWithTabs: false,
+    lineWrapping: false,
+    extraKeys: { Tab: function(c) { c.replaceSelection('  ', 'end'); } },
+  });
+  var original = '';
+
+  try {
+    var data = await api('GET', '/api/policies?path=' + encodeURIComponent(path));
+    cm.setValue(data.content);
+    original = data.content;
+    cm.clearHistory();
+  } catch (e) {
+    toast('Failed to load policy: ' + e.message, 'error');
+  }
+
+  cm.on('change', function() {
+    editorDirty = cm.getValue() !== original;
+    var ss = $('save-status');
+    if (ss) {
+      ss.textContent = editorDirty ? 'Unsaved changes' : '';
+      ss.className   = 'save-status' + (editorDirty ? ' dirty' : '');
+    }
+  });
+  cm.on('focus', function() { var w = $('editor-ta'); if (w) w.classList.add('focused'); });
+  cm.on('blur',  function() { var w = $('editor-ta'); if (w) w.classList.remove('focused'); });
+  activeEditor = cm;
+
+  async function save() {
+    var btn = $('save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    try {
+      await api('PUT', '/api/policies?path=' + encodeURIComponent(path), { content: cm.getValue() });
+      original    = cm.getValue();
+      editorDirty = false;
+      var ss = $('save-status');
+      if (ss) { ss.textContent = 'Saved'; ss.className = 'save-status saved'; }
+      setTimeout(function() {
+        var s2 = $('save-status');
+        if (s2 && s2.textContent === 'Saved') s2.textContent = '';
+      }, 2500);
+      toast('Policy saved', 'success');
+    } catch (e) {
+      toast('Save failed: ' + e.message, 'error');
+    } finally {
+      var btn2 = $('save-btn');
+      if (btn2) { btn2.disabled = false; btn2.textContent = 'Save'; }
+    }
+  }
+
+  $('save-btn').onclick = save;
+
+  $('run-pol-btn').onclick = async function() {
+    if (editorDirty) await save();
+    var btn = $('run-pol-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">&#9675;</span> Running…'; }
+    var dry = $('ed-dry') ? $('ed-dry').checked : true;
+    try {
+      var report = await api('POST', '/api/runs', { dry_run: dry, policy_path: path });
+      var total = report.policies.reduce(function(s, p) { return s + p.match_count; }, 0);
+      toast('Run complete — ' + total + ' match' + (total===1?'':'es') + ' found', total > 0 ? 'info' : 'success');
+      location.hash = '#/runs/' + report.run_id;
+    } catch (e) {
+      toast('Run failed: ' + e.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = playIcon + ' Run'; }
+    }
+  };
+
+  kbHandler = function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); }
+  };
+  document.addEventListener('keydown', kbHandler);
+}
+
+// ── Logs ───────────────────────────────────────────────────────────────────
+function pageLogs() {
+  logPaused     = false;
+  logAutoScroll = true;
+  logAll        = [];
+
+  setView(
+    '<div class="page-header" style="margin-bottom:10px">' +
+      '<h1 class="page-title">Logs</h1>' +
+      '<div class="btn-row">' +
+        '<span class="level-sel-label">Server level:</span>' +
+        '<select id="srv-level" class="level-sel">' +
+          '<option value="DEBUG">DEBUG</option>' +
+          '<option value="INFO">INFO</option>' +
+          '<option value="WARN">WARN</option>' +
+          '<option value="ERROR">ERROR</option>' +
+        '</select>' +
+        '<button class="btn btn-ghost btn-sm" id="pause-btn">Pause</button>' +
+        '<button class="btn btn-ghost btn-sm" id="clear-btn">Clear</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="log-toolbar">' +
+      '<span class="level-sel-label" style="margin-right:2px">Show:</span>' +
+      ['DEBUG','INFO','WARN','ERROR'].map(function(l) {
+        return '<button class="lvl-btn lvl-' + l + '" data-level="' + l + '">' + l + '</button>';
+      }).join('') +
+    '</div>' +
+    '<div class="log-box" id="log-box"></div>'
+  );
+
+  // Fetch current server log level and pre-select it.
+  api('GET', '/api/log-level').then(function(d) {
+    var sel = $('srv-level');
+    if (sel && d && d.level) sel.value = d.level;
+  }).catch(function() {});
+
+  $('srv-level').onchange = function() {
+    var level = this.value;
+    api('PUT', '/api/log-level', { level: level }).catch(function(e) {
+      toast('Failed to set log level: ' + e.message, 'error');
+    });
+  };
+
+  var box = $('log-box');
+
+  function appendEntry(e) {
+    if (!logLevels.has(e.level)) return;
+    var row = document.createElement('div');
+    row.className     = 'log-entry';
+    row.dataset.level = e.level;
+    var attrs = (e.attrs || []).map(function(a) { return a.k + '=' + a.v; }).join('  ');
+    row.innerHTML =
+      '<span class="l-time">'           + fmtLogTime(e.time) + '</span>' +
+      '<span class="l-level l-' + e.level + '">' + e.level + '</span>' +
+      '<span class="l-msg">'            + e.msg + '</span>' +
+      (attrs ? '<span class="l-attrs">' + attrs + '</span>' : '');
+    box.appendChild(row);
+    if (logAutoScroll) box.scrollTop = box.scrollHeight;
+  }
+
+  document.querySelectorAll('.lvl-btn').forEach(function(btn) {
+    var lv = btn.dataset.level;
+    if (!logLevels.has(lv)) btn.classList.add('off');
+    btn.onclick = function() {
+      if (logLevels.has(lv)) { logLevels.delete(lv); btn.classList.add('off'); }
+      else                   { logLevels.add(lv);    btn.classList.remove('off'); }
+      box.innerHTML = '';
+      logAll.forEach(function(e) { appendEntry(e); });
+    };
+  });
+
+  $('pause-btn').onclick = function() {
+    logPaused     = !logPaused;
+    logAutoScroll = !logPaused;
+    $('pause-btn').textContent = logPaused ? 'Resume' : 'Pause';
+    if (!logPaused) {
+      box.innerHTML = '';
+      logAll.forEach(function(e) { appendEntry(e); });
+      box.scrollTop = box.scrollHeight;
+    }
+  };
+
+  $('clear-btn').onclick = function() { logAll = []; box.innerHTML = ''; };
+
+  box.addEventListener('scroll', function() {
+    logAutoScroll = box.scrollTop + box.clientHeight >= box.scrollHeight - 24;
+  });
+
+  logES = new EventSource('/api/logs/stream');
+  logES.onmessage = function(ev) {
+    var e = JSON.parse(ev.data);
+    logAll.push(e);
+    if (!logPaused) appendEntry(e);
+  };
+  logES.onerror = function() {};
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+initTheme();
+fetch('/api/config').then(function(r) { return r.json(); }).then(function(c) {
+  appUrl = c.app_url;
+}).catch(function() {});
+
+route();
+</script>
+</body>
+</html>

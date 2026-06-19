@@ -1,0 +1,25 @@
+policies:
+  - name: disabled-users-audit
+    description: Report all disabled user accounts.
+    resource: datadog.user
+    filters:
+      - type: value
+        key: disabled
+        op: eq
+        value: true
+    actions:
+      - type: report
+
+  - name: users-without-title
+    description: All users should have a job title set in their profile.
+    resource: datadog.user
+    filters:
+      - type: value
+        key: title
+        op: absent
+      - type: value
+        key: service_account
+        op: eq
+        value: false
+    actions:
+      - type: report

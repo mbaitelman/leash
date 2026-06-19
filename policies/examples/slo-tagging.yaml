@@ -1,0 +1,27 @@
+policies:
+  - name: slo-missing-team-tag
+    description: All SLOs must have a team tag to indicate ownership.
+    resource: datadog.slo
+    filters:
+      - type: tag
+        key: team
+        op: absent
+    actions:
+      - type: report
+      - type: tag
+        tags:
+          - "leash:missing-team"
+
+  - name: stale-slos
+    description: SLOs not modified in 90 days may be outdated and should be reviewed.
+    resource: datadog.slo
+    filters:
+      - type: age
+        key: modified
+        op: older-than
+        value: "90d"
+    actions:
+      - type: report
+      - type: tag
+        tags:
+          - "leash:stale"

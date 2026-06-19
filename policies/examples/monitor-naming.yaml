@@ -1,0 +1,36 @@
+policies:
+  - name: enforce-monitor-naming-convention
+    description: >
+      Production monitors must have names prefixed with "[PROD]".
+      Matches monitors tagged env:prod that don't follow the convention.
+    resource: datadog.monitor
+    filters:
+      - type: tag
+        key: env
+        value: prod
+        op: present
+      - not:
+          - type: value
+            key: name
+            op: regex
+            value: "^\\[PROD\\]"
+    actions:
+      - type: report
+      - type: tag
+        tags:
+          - "compliance:naming-violation"
+          - "leash:flagged"
+      - type: notify
+        channel: slack
+        # webhook_url: "https://hooks.slack.com/services/xxx"
+        # Falls back to SLACK_WEBHOOK_URL environment variable
+
+  - name: alert-monitors-without-tags
+    description: All monitors should have at least one tag.
+    resource: datadog.monitor
+    filters:
+      - type: value
+        key: tags
+        op: absent
+    actions:
+      - type: report

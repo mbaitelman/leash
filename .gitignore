@@ -1,0 +1,32 @@
+# Binaries (root-level only)
+/leash
+/leash.exe
+*.exe
+*.out
+
+# Build artifacts
+/dist/
+/bin/
+/runs/
+
+# Go module cache (when using local GOPATH mount)
+.gopath/
+
+# Environment / secrets
+.env
+*.env
+
+# Test output
+*.test
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

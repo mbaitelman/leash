@@ -1,0 +1,16 @@
+policies:
+  - name: synthetic-missing-slo
+    description: >
+      All synthetic tests must be backed by a monitor-based SLO.
+      Leash checks each test's underlying monitor ID against every SLO's
+      monitor_ids list and flags any test that is not covered.
+    resource: datadog.synthetic
+    filters:
+      - type: value
+        key: synthetic.slo_linked
+        op: absent
+    actions:
+      - type: report
+      - type: tag
+        tags:
+          - "leash:missing-slo"
