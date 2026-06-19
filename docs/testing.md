@@ -159,7 +159,7 @@ Add a validation step to your PR pipeline — it requires no secrets and runs in
 ```yaml
 # GitHub Actions example
 - name: Validate Leash policies
-  run: docker run --rm -v ${{ github.workspace }}/policies:/policies:ro leash:latest validate --policy /policies/
+  run: docker run --rm -v ${{ github.workspace }}/policies:/policies:ro ghcr.io/mbaitelman/leash:latest validate --policy /policies/
 ```
 
 ---
@@ -278,7 +278,7 @@ docker run --rm \
   -e DD_APP_KEY=$DD_APP_KEY \
   -e DD_SITE=$DD_SITE \
   -v $(pwd)/policies:/policies:ro \
-  leash:latest run --policy /policies/examples/ --output-format text
+  ghcr.io/mbaitelman/leash:latest run --policy /policies/examples/ --output-format text
 ```
 
 ---
