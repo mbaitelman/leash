@@ -6,6 +6,20 @@ Leash is a governance-as-code framework for Datadog. Define policies in YAML —
 
 Inspired by [Cloud Custodian](https://cloudcustodian.io).
 
+## UI
+
+`leash serve` exposes a web UI for running policies, browsing results, and editing policy files — with live log streaming and dark mode.
+
+| Overview | Run detail |
+|---|---|
+| ![Overview](docs/screenshots/overview-light.png) | ![Run detail](docs/screenshots/run-detail-light.png) |
+
+| Logs | Dark mode |
+|---|---|
+| ![Logs](docs/screenshots/logs-light.png) | ![Dark mode](docs/screenshots/overview-dark.png) |
+
+---
+
 ```yaml
 policies:
   - name: prod-monitors-must-have-team-tag
