@@ -55,6 +55,7 @@ func (r *dashboardResource) Properties() map[string]any {
 	}
 	if d.AuthorHandle != nil {
 		props["author_handle"] = *d.AuthorHandle
+		props["creator.email"] = *d.AuthorHandle
 	}
 	if v := d.Description.Get(); v != nil {
 		props["description"] = *v
