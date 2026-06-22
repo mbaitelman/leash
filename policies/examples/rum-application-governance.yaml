@@ -1,0 +1,76 @@
+policies:
+  # Flag RUM apps that are inactive — they may be stale and collecting no data,
+  # but still count against your RUM quota.
+  - name: rum-apps-must-be-active
+    description: Inactive RUM applications should be reviewed and removed if no longer needed.
+    resource: datadog.rum_application
+    filters:
+      - type: value
+        key: is_active
+        op: eq
+        value: "false"
+    actions:
+      - type: report
+
+  # Ensure all RUM browser apps have an owning team tag.
+  - name: rum-browser-apps-must-have-team-tag
+    description: Every browser RUM application needs a team tag for ownership attribution.
+    resource: datadog.rum_application
+    filters:
+      - type: value
+        key: type
+        op: eq
+        value: browser
+      - type: tag
+        key: team
+        op: absent
+    actions:
+      - type: report
+      - type: notify
+        channel: slack
+
+  # Alert on RUM apps where the event processing scale is NONE — these apps are
+  # configured but not actually processing any RUM events.
+  - name: rum-apps-must-process-events
+    description: RUM applications with event processing disabled are collecting no data.
+    resource: datadog.rum_application
+    filters:
+      - type: value
+        key: product_scales.rum_processing_state
+        op: eq
+        value: NONE
+    actions:
+      - type: report
+
+  # Retention filters with a very low sample rate on session events may cause
+  # gaps in replay coverage for debugging.
+  - name: rum-session-retention-must-meet-minimum-rate
+    description: Session retention filters should sample at least 20% to maintain replay coverage.
+    resource: datadog.rum_retention_filter
+    filters:
+      - type: value
+        key: event_type
+        op: eq
+        value: session
+      - type: value
+        key: enabled
+        op: eq
+        value: "true"
+      - type: value
+        key: sample_rate
+        op: lt
+        value: "20"
+    actions:
+      - type: report
+
+  # Disabled retention filters that still exist are likely stale configuration.
+  - name: rum-retention-filters-must-be-enabled
+    description: Disabled retention filters serve no purpose and should be removed or re-enabled.
+    resource: datadog.rum_retention_filter
+    filters:
+      - type: value
+        key: enabled
+        op: eq
+        value: "false"
+    actions:
+      - type: report
