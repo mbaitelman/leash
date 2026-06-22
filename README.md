@@ -129,6 +129,8 @@ policies:
 | `datadog.synthetic` | Synthetic API and browser tests |
 | `datadog.dashboard` | Dashboards |
 | `datadog.user` | User accounts |
+| `datadog.rum_application` | RUM applications |
+| `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) |
 
 ### Filters
 
@@ -410,6 +412,35 @@ The schedule uses standard 5-field cron syntax: `minute hour day month weekday`.
 | `service_account` | bool | Whether this is a service account |
 | `created` | time.Time | Account creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
+
+### `datadog.rum_application`
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | string | Application ID |
+| `name` | string | Application name |
+| `type` | string | `browser`, `ios`, `android`, `react-native`, `flutter`, `roku`, `electron`, `unity`, `kotlin-multiplatform` |
+| `is_active` | bool | Whether the application is active and collecting data |
+| `creator.email` | string | Handle of the user who created the application |
+| `created` | time.Time | Creation timestamp |
+| `updated` | time.Time | Last updated timestamp |
+| `updated_by_handle` | string | Handle of the user who last updated the application |
+| `product_scales.rum_processing_state` | string | Event processing scale: `ALL`, `ERROR_FOCUSED_MODE`, or `NONE` |
+| `product_scales.analytics_retention_state` | string | Product analytics retention: `MAX` or `NONE` |
+
+### `datadog.rum_retention_filter`
+
+Each retention filter is a separate resource. Use `app_id` to correlate back to a `datadog.rum_application`.
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | string | Filter ID |
+| `app_id` | string | Parent RUM application ID |
+| `name` | string | Filter name |
+| `enabled` | bool | Whether the filter is active |
+| `event_type` | string | `session`, `view`, `action`, `error`, `resource`, `long_task` |
+| `query` | string | RUM search query scoping this filter |
+| `sample_rate` | float64 | Sampling rate (0.1–100) |
 
 ---
 
