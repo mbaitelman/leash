@@ -22,6 +22,8 @@ policies:
 | `datadog.synthetic` | Synthetic API and browser tests | no | no |
 | `datadog.dashboard` | Dashboards | no | no |
 | `datadog.user` | User accounts | no | yes (disables) |
+| `datadog.rum_application` | RUM applications | no | no |
+| `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) | no | no |
 
 > **Note on deletion:** Datadog does not support hard-deleting user accounts via API. The `delete` action on `datadog.user` calls `DisableUser`, not a destructive delete. The `Taggable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
 
@@ -313,7 +315,7 @@ Deletes or disables the matched resource. Requires two explicit opt-ins to preve
 | `datadog.monitor` | Hard-deletes the monitor via the Datadog API |
 | `datadog.user` | Disables the user account (`DisableUser` API) — Datadog does not support hard user deletion |
 
-Using `delete` on `datadog.slo`, `datadog.synthetic`, or `datadog.dashboard` records an error (not implemented).
+Using `delete` on `datadog.slo`, `datadog.synthetic`, `datadog.dashboard`, `datadog.rum_application`, or `datadog.rum_retention_filter` records an error (not implemented).
 
 ---
 
@@ -334,6 +336,8 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 | `created` | time.Time | Creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
 | `overall_state` | string | `OK`, `Alert`, `Warn`, `No Data`, `Unknown`, `Ignored` |
+| `creator.email` | string | Email of the user who created the monitor |
+| `creator.handle` | string | Datadog handle of the creator |
 | `options.notify_no_data` | bool | Whether no-data state triggers an alert |
 | `options.require_full_window` | bool | Whether the monitor requires a full evaluation window |
 | `options.thresholds.critical` | float64 | Critical alert threshold value |
@@ -371,6 +375,7 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 | `id` | string | Dashboard ID |
 | `title` | string | Dashboard title |
 | `author_handle` | string | Author's email or handle |
+| `creator.email` | string | Same as `author_handle`; use this for cross-resource consistency |
 | `description` | string | Description |
 | `layout_type` | string | `ordered` or `free` |
 | `url` | string | Relative URL path (e.g. `/dashboard/abc-123`) |
@@ -390,6 +395,35 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 | `service_account` | bool | Whether this is a service account |
 | `created` | time.Time | Account creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
+
+### `datadog.rum_application`
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | string | Application ID |
+| `name` | string | Application name |
+| `type` | string | `browser`, `ios`, `android`, `react-native`, `flutter`, `roku`, `electron`, `unity`, `kotlin-multiplatform` |
+| `is_active` | bool | Whether the application is active and collecting data |
+| `creator.email` | string | Handle of the user who created the application |
+| `created` | time.Time | Creation timestamp |
+| `updated` | time.Time | Last updated timestamp |
+| `updated_by_handle` | string | Handle of the user who last updated the application |
+| `product_scales.rum_processing_state` | string | `ALL`, `ERROR_FOCUSED_MODE`, or `NONE` — controls which RUM events are processed |
+| `product_scales.analytics_retention_state` | string | `MAX` or `NONE` — controls Product Analytics data retention |
+
+### `datadog.rum_retention_filter`
+
+Each retention filter for a RUM application is a separate resource. Use `app_id` to correlate back to `datadog.rum_application`.
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | string | Filter ID |
+| `app_id` | string | Parent RUM application ID |
+| `name` | string | Filter name |
+| `enabled` | bool | Whether the filter is active |
+| `event_type` | string | `session`, `view`, `action`, `error`, `resource`, or `long_task` |
+| `query` | string | RUM search query scoping this filter |
+| `sample_rate` | float64 | Sampling rate (0.1–100) |
 
 ---
 
