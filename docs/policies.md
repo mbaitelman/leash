@@ -419,6 +419,7 @@ Each retention filter for a RUM application is a separate resource. Use `app_id`
 |---|---|---|
 | `id` | string | Filter ID |
 | `app_id` | string | Parent RUM application ID |
+| `app_name` | string | Parent RUM application name |
 | `name` | string | Filter name |
 | `enabled` | bool | Whether the filter is active |
 | `event_type` | string | `session`, `view`, `action`, `error`, `resource`, or `long_task` |
