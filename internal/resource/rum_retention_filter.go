@@ -30,6 +30,7 @@ func (p *rumRetentionFilterProvider) List(ctx context.Context, client *datadog.A
 	var resources []Resource
 	for _, app := range appsResp.GetData() {
 		appID := app.GetId()
+		appName := app.GetAttributes().Name
 		resp, _, err := filterAPI.ListRetentionFilters(ctx, appID)
 		if err != nil {
 			slog.Warn("failed to list retention filters", "app_id", appID, "error", err)
@@ -37,8 +38,9 @@ func (p *rumRetentionFilterProvider) List(ctx context.Context, client *datadog.A
 		}
 		for i := range resp.GetData() {
 			resources = append(resources, &rumRetentionFilterResource{
-				inner: resp.GetData()[i],
-				appID: appID,
+				inner:   resp.GetData()[i],
+				appID:   appID,
+				appName: appName,
 			})
 		}
 	}
@@ -48,8 +50,9 @@ func (p *rumRetentionFilterProvider) List(ctx context.Context, client *datadog.A
 // ---- Resource ----
 
 type rumRetentionFilterResource struct {
-	inner datadogV2.RumRetentionFilterData
-	appID string
+	inner   datadogV2.RumRetentionFilterData
+	appID   string
+	appName string
 }
 
 func (r *rumRetentionFilterResource) Type() string { return "datadog.rum_retention_filter" }
@@ -59,7 +62,8 @@ func (r *rumRetentionFilterResource) Raw() any     { return r.inner }
 func (r *rumRetentionFilterResource) Properties() map[string]any {
 	attrs := r.inner.GetAttributes()
 	props := map[string]any{
-		"app_id": r.appID,
+		"app_id":   r.appID,
+		"app_name": r.appName,
 	}
 	if r.inner.Id != nil {
 		props["id"] = *r.inner.Id

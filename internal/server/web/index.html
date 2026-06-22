@@ -486,15 +486,19 @@ function fmtSize(b) { return b < 1024 ? b + ' B' : (b/1024).toFixed(1) + ' KB'; 
 
 function resName(props) { return (props && (props.name || props.title || props.email)) || '—'; }
 
-function ddLink(type, id) {
-  if (!id) return null;
+function ddLink(type, id, props) {
   switch (type) {
-    case 'datadog.monitor':   return appUrl + '/monitors/' + id;
-    case 'datadog.slo':       return appUrl + '/slo?slo_id=' + id;
-    case 'datadog.synthetic': return appUrl + '/synthetics/details/' + id;
-    case 'datadog.dashboard': return appUrl + '/dashboard/' + id;
-    case 'datadog.user':      return appUrl + '/organization-settings/users';
-    default:                  return null;
+    case 'datadog.monitor':              return id ? appUrl + '/monitors/' + id : null;
+    case 'datadog.slo':                  return id ? appUrl + '/slo?slo_id=' + id : null;
+    case 'datadog.synthetic':            return id ? appUrl + '/synthetics/details/' + id : null;
+    case 'datadog.dashboard':            return id ? appUrl + '/dashboard/' + id : null;
+    case 'datadog.user':                 return appUrl + '/organization-settings/users';
+    case 'datadog.rum_application':      return id ? appUrl + '/rum/explorer?application_id=' + id : null;
+    case 'datadog.rum_retention_filter': {
+      const appId = props && props.app_id ? props.app_id : id;
+      return appId ? appUrl + '/rum/explorer?application_id=' + appId : null;
+    }
+    default:                             return null;
   }
 }
 
@@ -735,7 +739,7 @@ async function pageRunDetail(id) {
 
     function matchCardHTML(m, resourceType, pol, isViolation) {
       const name = resName(m.properties);
-      const link = ddLink(resourceType, m.id);
+      const link = ddLink(resourceType, m.id, m.properties);
       const rows = propRows(m.properties);
       const acts = isViolation
         ? (pol.actions_taken || []).filter(a => a.resource_id === m.id)
