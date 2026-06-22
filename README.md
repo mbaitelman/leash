@@ -351,6 +351,8 @@ The schedule uses standard 5-field cron syntax: `minute hour day month weekday`.
 | `created` | time.Time | Creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
 | `overall_state` | string | `OK`, `Alert`, `Warn`, `No Data` |
+| `creator.email` | string | Email of the user who created the monitor |
+| `creator.handle` | string | Datadog handle of the creator |
 | `options.notify_no_data` | bool | No-data alerting enabled |
 | `options.require_full_window` | bool | Requires a full evaluation window before alerting |
 | `options.thresholds.critical` | float64 | Critical threshold value |
@@ -388,6 +390,7 @@ The schedule uses standard 5-field cron syntax: `minute hour day month weekday`.
 | `id` | string | Dashboard ID |
 | `title` | string | Dashboard title |
 | `author_handle` | string | Author's email/handle |
+| `creator.email` | string | Same as `author_handle`; use this for cross-resource consistency |
 | `description` | string | Description |
 | `layout_type` | string | `ordered` or `free` |
 | `url` | string | Relative URL path (e.g. `/dashboard/abc-123`) |

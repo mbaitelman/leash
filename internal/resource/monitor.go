@@ -87,6 +87,14 @@ func (r *monitorResource) Properties() map[string]any {
 			props["options.thresholds.critical"] = *opts.Thresholds.Critical
 		}
 	}
+	if c := m.Creator; c != nil {
+		if c.Email != nil {
+			props["creator.email"] = *c.Email
+		}
+		if c.Handle != nil {
+			props["creator.handle"] = *c.Handle
+		}
+	}
 	return props
 }
 
