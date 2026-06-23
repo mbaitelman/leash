@@ -370,6 +370,8 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 
 ### `datadog.dashboard`
 
+> **Performance note:** The Datadog list-dashboards endpoint does not return tags. Leash fetches each dashboard individually to populate the `tags` field. For organizations with many dashboards this scan will be slower than other resource types.
+
 | Key | Type | Description |
 |---|---|---|
 | `id` | string | Dashboard ID |
@@ -379,6 +381,7 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 | `description` | string | Description |
 | `layout_type` | string | `ordered` or `free` |
 | `url` | string | Relative URL path (e.g. `/dashboard/abc-123`) |
+| `tags` | []string | Tag list |
 | `created` | time.Time | Creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
 

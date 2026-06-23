@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
@@ -20,15 +21,20 @@ func (p *dashboardProvider) ResourceType() string { return "datadog.dashboard" }
 
 func (p *dashboardProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV1.NewDashboardsApi(client)
-	resp, _, err := api.ListDashboards(ctx, *datadogV1.NewListDashboardsOptionalParameters())
+	listResp, _, err := api.ListDashboards(ctx, *datadogV1.NewListDashboardsOptionalParameters())
 	if err != nil {
 		return nil, fmt.Errorf("listing dashboards: %w", err)
 	}
 
-	dashboards := resp.GetDashboards()
-	resources := make([]Resource, 0, len(dashboards))
-	for i := range dashboards {
-		resources = append(resources, &dashboardResource{inner: dashboards[i], client: client})
+	resources := make([]Resource, 0, len(listResp.GetDashboards()))
+	for _, summary := range listResp.GetDashboards() {
+		id := summary.GetId()
+		full, _, err := api.GetDashboard(ctx, id)
+		if err != nil {
+			slog.Warn("failed to get dashboard details", "id", id, "error", err)
+			continue
+		}
+		resources = append(resources, &dashboardResource{inner: full})
 	}
 	return resources, nil
 }
@@ -36,8 +42,7 @@ func (p *dashboardProvider) List(ctx context.Context, client *datadog.APIClient)
 // ---- Resource ----
 
 type dashboardResource struct {
-	inner  datadogV1.DashboardSummaryDefinition
-	client *datadog.APIClient
+	inner datadogV1.Dashboard
 }
 
 func (r *dashboardResource) Type() string { return "datadog.dashboard" }
@@ -68,6 +73,9 @@ func (r *dashboardResource) Properties() map[string]any {
 	}
 	if d.Url != nil {
 		props["url"] = *d.Url
+	}
+	if tags := d.Tags.Get(); tags != nil && len(*tags) > 0 {
+		props["tags"] = *tags
 	}
 	return props
 }

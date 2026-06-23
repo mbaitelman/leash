@@ -396,6 +396,7 @@ The schedule uses standard 5-field cron syntax: `minute hour day month weekday`.
 | `description` | string | Description |
 | `layout_type` | string | `ordered` or `free` |
 | `url` | string | Relative URL path (e.g. `/dashboard/abc-123`) |
+| `tags` | []string | Tag list |
 | `created` | time.Time | Creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
 
