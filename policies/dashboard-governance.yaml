@@ -1,0 +1,10 @@
+policies:
+  - name: dashboards-missing-team-tag
+    description: All dashboards must declare an owning team via a team:<name> tag.
+    resource: datadog.dashboard
+    filters:
+      - type: tag
+        key: team
+        op: absent
+    actions:
+      - type: report
