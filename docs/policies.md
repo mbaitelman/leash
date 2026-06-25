@@ -15,17 +15,17 @@ policies:
 
 ## Resource types
 
-| Name | Datadog entity | Taggable | Deletable |
-|---|---|---|---|
-| `datadog.monitor` | Monitors (metric, log, APM, composite, …) | yes | yes |
-| `datadog.slo` | Service Level Objectives | yes | no |
-| `datadog.synthetic` | Synthetic API and browser tests | no | no |
-| `datadog.dashboard` | Dashboards | no | no |
-| `datadog.user` | User accounts | no | yes (disables) |
-| `datadog.rum_application` | RUM applications | no | no |
-| `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) | no | no |
+| Name | Datadog entity | Taggable | Tag-removable | Deletable |
+|---|---|---|---|---|
+| `datadog.monitor` | Monitors (metric, log, APM, composite, …) | yes | yes | yes |
+| `datadog.slo` | Service Level Objectives | yes | yes | no |
+| `datadog.synthetic` | Synthetic API and browser tests | no | no | no |
+| `datadog.dashboard` | Dashboards | no | no | no |
+| `datadog.user` | User accounts | no | no | yes (disables) |
+| `datadog.rum_application` | RUM applications | no | no | no |
+| `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) | no | no | no |
 
-> **Note on deletion:** Datadog does not support hard-deleting user accounts via API. The `delete` action on `datadog.user` calls `DisableUser`, not a destructive delete. The `Taggable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
+> **Note on deletion:** Datadog does not support hard-deleting user accounts via API. The `delete` action on `datadog.user` calls `DisableUser`, not a destructive delete. The `Taggable` / `Tag-removable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
 
 ---
 
@@ -260,19 +260,43 @@ No fields. Including `report` is optional but recommended — it ensures matches
 
 ### `tag`
 
-Adds one or more Datadog tags to the matched resource.
+Adds one or more Datadog tags to the matched resource. Optionally removes those same tags from resources that *pass* the policy (i.e., are now compliant).
 
 ```yaml
 - type: tag
   tags:
     - "compliance:violation"
     - "leash:flagged"
+  remove_on_pass: false   # optional — default false
 ```
 
+**Fields:**
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `tags` | Yes | — | List of `key:value` tag strings to add to matched resources |
+| `remove_on_pass` | No | `false` | When `true`, also removes the listed tags from resources that pass the policy |
+
 **Behavior:**
-- **Additive only** — existing tags are never removed. Tags already present on the resource are silently skipped.
+- **Additive only (default)** — existing tags are never removed. Tags already present on the resource are silently skipped.
 - **Idempotent** — running the same policy twice does not duplicate tags.
-- Supported resources: `datadog.monitor`, `datadog.slo`. Using `tag` on other resource types records an error in `actions_taken`.
+- Supported for add: `datadog.monitor`, `datadog.slo`. Using `tag` on other resource types records an error in `actions_taken`.
+
+**`remove_on_pass`:**
+
+Set `remove_on_pass: true` to automatically clean up leash-applied marker tags once a resource becomes compliant again:
+
+```yaml
+- type: tag
+  tags:
+    - "leash:missing-team"
+  remove_on_pass: true
+```
+
+- Resources that **match** (still non-compliant) → tags added as normal.
+- Resources that **pass** (now compliant) → listed tags removed if present; tags already absent are silently skipped.
+- Dry-run is fully respected — no API call is made.
+- Supported resources (tag removal): `datadog.monitor`, `datadog.slo`. Using `remove_on_pass` on other resource types records an error in the server log.
 
 ---
 
@@ -432,6 +456,29 @@ Each retention filter for a RUM application is a separate resource. Use `app_id`
 ---
 
 ## Complete examples
+
+### Auto-clean marker tags when a resource becomes compliant
+
+`remove_on_pass: true` closes the feedback loop: leash adds the tag when a resource is non-compliant and removes it once the resource passes again — with no manual cleanup required.
+
+```yaml
+policies:
+  - name: slo-missing-team-tag
+    description: SLOs must declare an owning team. Tags are added on violation and removed on remediation.
+    resource: datadog.slo
+    filters:
+      - type: tag
+        key: team
+        op: absent
+    actions:
+      - type: report
+      - type: tag
+        tags:
+          - "leash:missing-team"
+        remove_on_pass: true   # removes "leash:missing-team" once the SLO has a team tag
+```
+
+---
 
 ### Flag production monitors missing a team tag
 
