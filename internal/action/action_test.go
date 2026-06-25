@@ -15,11 +15,12 @@ import (
 
 // fakeResource implements resource.Resource for testing.
 type fakeResource struct {
-	id       string
-	resType  string
-	props    map[string]any
-	addTagFn func([]string) error
-	deleteFn func() error
+	id          string
+	resType     string
+	props       map[string]any
+	addTagFn    func([]string) error
+	removeTagFn func([]string) error
+	deleteFn    func() error
 }
 
 func (r *fakeResource) Type() string               { return r.resType }
@@ -31,6 +32,14 @@ func (r *fakeResource) Raw() any                   { return nil }
 func (r *fakeResource) AddTags(_ context.Context, tags []string) error {
 	if r.addTagFn != nil {
 		return r.addTagFn(tags)
+	}
+	return nil
+}
+
+// RemoveTags makes fakeResource implement resource.TagRemovable.
+func (r *fakeResource) RemoveTags(_ context.Context, tags []string) error {
+	if r.removeTagFn != nil {
+		return r.removeTagFn(tags)
 	}
 	return nil
 }
@@ -125,6 +134,136 @@ func TestTagAction_AllTagsPresent_NoCall(t *testing.T) {
 		t.Error("AddTags should not be called when all tags already present")
 	}
 }
+
+// ── Tag action: remove_on_pass ────────────────────────────────────────────────
+
+func mustPassAction(t *testing.T, act action.Action) action.PassAction {
+	t.Helper()
+	pa, ok := act.(action.PassAction)
+	if !ok {
+		t.Fatal("action does not implement PassAction")
+	}
+	return pa
+}
+
+func TestTagAction_RemoveOnPass_DryRun_NoAPICall(t *testing.T) {
+	factory, _ := action.Get("tag")
+	act, _ := factory(map[string]any{
+		"type":           "tag",
+		"tags":           []any{"leash:flagged"},
+		"remove_on_pass": true,
+	})
+
+	called := false
+	r := resource("abc", map[string]any{"tags": []string{"leash:flagged"}})
+	r.removeTagFn = func(_ []string) error {
+		called = true
+		return nil
+	}
+
+	if err := mustPassAction(t, act).ExecuteOnPass(context.Background(), r, true); err != nil {
+		t.Fatalf("ExecuteOnPass dry-run: %v", err)
+	}
+	if called {
+		t.Error("RemoveTags should not be called in dry-run mode")
+	}
+}
+
+func TestTagAction_RemoveOnPass_NotOptedIn_NoOp(t *testing.T) {
+	factory, _ := action.Get("tag")
+	act, _ := factory(map[string]any{
+		"type": "tag",
+		"tags": []any{"leash:flagged"},
+		// remove_on_pass not set
+	})
+
+	called := false
+	r := resource("abc", map[string]any{"tags": []string{"leash:flagged"}})
+	r.removeTagFn = func(_ []string) error {
+		called = true
+		return nil
+	}
+
+	if err := mustPassAction(t, act).ExecuteOnPass(context.Background(), r, false); err != nil {
+		t.Fatalf("ExecuteOnPass: %v", err)
+	}
+	if called {
+		t.Error("RemoveTags should not be called when remove_on_pass is false")
+	}
+}
+
+func TestTagAction_RemoveOnPass_TagsAbsent_NoCall(t *testing.T) {
+	factory, _ := action.Get("tag")
+	act, _ := factory(map[string]any{
+		"type":           "tag",
+		"tags":           []any{"leash:flagged"},
+		"remove_on_pass": true,
+	})
+
+	called := false
+	r := resource("abc", map[string]any{"tags": []string{"env:prod"}})
+	r.removeTagFn = func(_ []string) error {
+		called = true
+		return nil
+	}
+
+	if err := mustPassAction(t, act).ExecuteOnPass(context.Background(), r, false); err != nil {
+		t.Fatalf("ExecuteOnPass: %v", err)
+	}
+	if called {
+		t.Error("RemoveTags should not be called when the tags are not present on the resource")
+	}
+}
+
+func TestTagAction_RemoveOnPass_RemovesOnlyMatchingTags(t *testing.T) {
+	factory, _ := action.Get("tag")
+	act, _ := factory(map[string]any{
+		"type":           "tag",
+		"tags":           []any{"leash:flagged"},
+		"remove_on_pass": true,
+	})
+
+	var received []string
+	r := resource("abc", map[string]any{"tags": []string{"env:prod", "leash:flagged"}})
+	r.removeTagFn = func(tags []string) error {
+		received = tags
+		return nil
+	}
+
+	if err := mustPassAction(t, act).ExecuteOnPass(context.Background(), r, false); err != nil {
+		t.Fatalf("ExecuteOnPass: %v", err)
+	}
+	if len(received) != 1 || received[0] != "leash:flagged" {
+		t.Errorf("expected only 'leash:flagged' removed, got %v", received)
+	}
+}
+
+func TestTagAction_RemoveOnPass_NonRemovableResource(t *testing.T) {
+	factory, _ := action.Get("tag")
+	act, _ := factory(map[string]any{
+		"type":           "tag",
+		"tags":           []any{"leash:x"},
+		"remove_on_pass": true,
+	})
+
+	r := &nonRemovable{id: "x", props: map[string]any{"tags": []string{"leash:x"}}}
+	err := mustPassAction(t, act).ExecuteOnPass(context.Background(), r, false)
+	if err == nil {
+		t.Error("expected error for resource that does not implement TagRemovable")
+	}
+}
+
+// nonRemovable implements resource.Resource and resource.Taggable but NOT resource.TagRemovable.
+type nonRemovable struct {
+	id    string
+	props map[string]any
+}
+
+func (r *nonRemovable) Type() string                              { return "nr.resource" }
+func (r *nonRemovable) ID() string                               { return r.id }
+func (r *nonRemovable) Properties() map[string]any               { return r.props }
+func (r *nonRemovable) Raw() any                                  { return nil }
+func (r *nonRemovable) AddTags(_ context.Context, _ []string) error { return nil }
 
 func TestTagAction_NonTaggableResource(t *testing.T) {
 	factory, _ := action.Get("tag")

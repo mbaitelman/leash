@@ -73,9 +73,18 @@ func (r *sloResource) Properties() map[string]any {
 // AddTags merges new tags into the SLO's existing tag list.
 func (r *sloResource) AddTags(ctx context.Context, tags []string) error {
 	merged := mergeTags(r.inner.GetTags(), tags)
-	// Copy the full SLO and update only the tags to avoid losing other fields.
 	body := r.inner
 	body.Tags = merged
+	api := datadogV1.NewServiceLevelObjectivesApi(r.client)
+	_, _, err := api.UpdateSLO(ctx, r.inner.GetId(), body)
+	return err
+}
+
+// RemoveTags removes the specified tags from the SLO's existing tag list.
+func (r *sloResource) RemoveTags(ctx context.Context, tags []string) error {
+	filtered := removeTags(r.inner.GetTags(), tags)
+	body := r.inner
+	body.Tags = filtered
 	api := datadogV1.NewServiceLevelObjectivesApi(r.client)
 	_, _, err := api.UpdateSLO(ctx, r.inner.GetId(), body)
 	return err
