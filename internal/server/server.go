@@ -59,8 +59,8 @@ func (r *statusRecorder) WriteHeader(code int) {
 // terminal and also pushes an entry to the in-memory log buffer for the UI.
 func (s *Server) httpLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip SSE stream (long-lived) and static file requests.
-		if r.URL.Path == "/api/logs/stream" || !strings.HasPrefix(r.URL.Path, "/api/") {
+		// Skip SSE stream (long-lived), health probes, and static file requests.
+		if r.URL.Path == "/api/logs/stream" || r.URL.Path == "/health" || !strings.HasPrefix(r.URL.Path, "/api/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -114,6 +114,7 @@ func (s *Server) Start(ctx context.Context) error {
 	mux := http.NewServeMux()
 
 	// API routes — order matters: specific prefix before generic
+	mux.HandleFunc("/health", s.handleHealth)
 	mux.HandleFunc("/api/runs/", s.handleRunByID)
 	mux.HandleFunc("/api/runs", s.handleRuns)
 	mux.HandleFunc("/api/policies", s.handlePolicies)
@@ -154,6 +155,14 @@ func totalMatches(r *output.FindingsReport) int {
 		n += p.MatchCount
 	}
 	return n
+}
+
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	writeJSON(w, map[string]string{"status": "ok"})
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
