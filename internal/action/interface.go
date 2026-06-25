@@ -13,5 +13,11 @@ type Action interface {
 	Execute(ctx context.Context, r resource.Resource, dryRun bool) error
 }
 
+// PassAction is optionally implemented by actions that can also operate on
+// resources that pass (do not match) a policy's filters.
+type PassAction interface {
+	ExecuteOnPass(ctx context.Context, r resource.Resource, dryRun bool) error
+}
+
 // Factory constructs an Action from the raw YAML spec map.
 type Factory func(spec map[string]any) (Action, error)

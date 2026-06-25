@@ -86,6 +86,15 @@ func (e *Engine) runPolicy(pol policy.Policy, dryRun bool) (*output.PolicyResult
 				ID:         r.ID(),
 				Properties: r.Properties(),
 			})
+			for _, act := range actions {
+				passAct, ok := act.(action.PassAction)
+				if !ok {
+					continue
+				}
+				if err := passAct.ExecuteOnPass(e.ctx, r, dryRun); err != nil {
+					slog.Error("pass-action failed", "action", act.Type(), "resource_id", r.ID(), "error", err)
+				}
+			}
 			continue
 		}
 

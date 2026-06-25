@@ -188,7 +188,7 @@ filters:
 |---|---|---|
 | `report` | No | Print matched resource to stdout; always runs |
 | `notify` | No | POST a message to a Slack webhook |
-| `tag` | Yes | Add tags to the resource via the Datadog API |
+| `tag` | Yes | Add tags to matched resources; optionally remove them from passing resources (`remove_on_pass: true`) |
 | `delete` | Yes | Delete the resource (requires `confirm: true` in YAML) |
 
 **report:**
@@ -210,6 +210,7 @@ filters:
   tags:
     - "compliance:violation"
     - "leash:flagged"
+  remove_on_pass: true   # optional — removes these tags once the resource passes the policy
 ```
 
 **delete** (requires two explicit opt-ins):

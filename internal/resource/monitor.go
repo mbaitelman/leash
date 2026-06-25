@@ -107,6 +107,15 @@ func (r *monitorResource) AddTags(ctx context.Context, tags []string) error {
 	return err
 }
 
+// RemoveTags removes the specified tags from the monitor's existing tag list.
+func (r *monitorResource) RemoveTags(ctx context.Context, tags []string) error {
+	filtered := removeTags(r.inner.GetTags(), tags)
+	body := datadogV1.MonitorUpdateRequest{Tags: filtered}
+	api := datadogV1.NewMonitorsApi(r.client)
+	_, _, err := api.UpdateMonitor(ctx, r.inner.GetId(), body)
+	return err
+}
+
 // Delete removes the monitor.
 func (r *monitorResource) Delete(ctx context.Context) error {
 	api := datadogV1.NewMonitorsApi(r.client)
@@ -124,6 +133,20 @@ func mergeTags(existing, newTags []string) []string {
 		if _, ok := seen[t]; !ok {
 			result = append(result, t)
 			seen[t] = struct{}{}
+		}
+	}
+	return result
+}
+
+func removeTags(existing, toRemove []string) []string {
+	skip := make(map[string]struct{}, len(toRemove))
+	for _, t := range toRemove {
+		skip[t] = struct{}{}
+	}
+	result := make([]string, 0, len(existing))
+	for _, t := range existing {
+		if _, ok := skip[t]; !ok {
+			result = append(result, t)
 		}
 	}
 	return result

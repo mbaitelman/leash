@@ -30,6 +30,11 @@ type Taggable interface {
 	AddTags(ctx context.Context, tags []string) error
 }
 
+// TagRemovable is implemented by resources that support removing tags via the API.
+type TagRemovable interface {
+	RemoveTags(ctx context.Context, tags []string) error
+}
+
 // Deletable is implemented by resources that support deletion via the API.
 type Deletable interface {
 	Delete(ctx context.Context) error
