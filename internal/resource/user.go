@@ -74,6 +74,15 @@ func (r *userResource) Properties() map[string]any {
 	if attrs.ServiceAccount != nil {
 		props["service_account"] = *attrs.ServiceAccount
 	}
+	if attrs.MfaEnabled != nil {
+		props["mfa_enabled"] = *attrs.MfaEnabled
+	}
+	if attrs.Verified != nil {
+		props["verified"] = *attrs.Verified
+	}
+	if v := attrs.LastLoginTime.Get(); v != nil {
+		props["last_login"] = *v
+	}
 	return props
 }
 
