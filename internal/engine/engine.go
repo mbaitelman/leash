@@ -70,6 +70,7 @@ func (e *Engine) runPolicy(pol policy.Policy, dryRun bool) (*output.PolicyResult
 
 	result := &output.PolicyResult{
 		PolicyName:   pol.Name,
+		Description:  pol.Description,
 		Resource:     pol.Resource,
 		Matches:      []output.ResourceMatch{},
 		Passing:      []output.ResourceMatch{},
