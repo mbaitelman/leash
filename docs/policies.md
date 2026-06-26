@@ -420,6 +420,9 @@ These are the property keys available for `value` and `age` filters. The `tag` f
 | `status` | string | `Active`, `Pending`, or `Disabled` |
 | `disabled` | bool | Whether the account is currently disabled |
 | `service_account` | bool | Whether this is a service account |
+| `mfa_enabled` | bool | Whether multi-factor authentication is enabled for the account |
+| `verified` | bool | Whether the user has verified their email address (always `false` for SAML/SSO-provisioned accounts) |
+| `last_login` | time.Time | Timestamp of the user's most recent login; **absent** if the user has never logged in |
 | `created` | time.Time | Account creation timestamp |
 | `modified` | time.Time | Last modified timestamp |
 
