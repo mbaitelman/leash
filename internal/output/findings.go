@@ -19,6 +19,7 @@ type FindingsReport struct {
 // PolicyResult holds the result of evaluating one policy.
 type PolicyResult struct {
 	PolicyName   string          `json:"policy_name"`
+	Description  string          `json:"description,omitempty"`
 	Resource     string          `json:"resource"`
 	MatchCount   int             `json:"match_count"`
 	Matches      []ResourceMatch `json:"matches"`

@@ -188,7 +188,8 @@
     .pol-row-hdr:hover { background:var(--hov); }
     .pol-chevron { transition:transform .15s; color:var(--mu2); flex-shrink:0; }
     .pol-chevron.open { transform:rotate(90deg); }
-    .pol-row-name { font-weight:600; font-size:13.5px; flex:1; }
+    .pol-row-name { font-weight:600; font-size:13.5px; }
+    .pol-row-desc { font-size:12px; color:var(--mu); margin-top:1px; }
     .pol-row-type { font-size:12px; color:var(--mu); }
     .pol-row-body { border-top:1px solid var(--bd2); padding:4px 0 8px; display:none; }
     .pol-row-body.open { display:block; }
@@ -785,7 +786,10 @@ async function pageRunDetail(id) {
       return '<div class="pol-row" id="' + uid + '">' +
         '<div class="pol-row-hdr" onclick="togglePolRow(\'' + uid + '\')">' +
           '<span class="pol-chevron' + (open ? ' open' : '') + '">' + chevRight + '</span>' +
-          '<span class="pol-row-name">' + esc(pol.policy_name) + '</span>' +
+          '<span style="flex:1;min-width:0">' +
+            '<span class="pol-row-name">' + esc(pol.policy_name) + '</span>' +
+            (pol.description ? '<div class="pol-row-desc">' + esc(pol.description) + '</div>' : '') +
+          '</span>' +
           '<span class="pol-row-type">' + esc(pol.resource.replace('datadog.','')) + '</span>' +
           '<span class="match-bubble ' + bubble + '">' + pol.match_count + '</span>' +
         '</div>' +
