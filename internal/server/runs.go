@@ -45,6 +45,16 @@ func (s *RunStore) Save(r *output.FindingsReport) error {
 	return enc.Encode(r)
 }
 
+// runListFields is a minimal decode target for List — skips large Matches/Passing/ActionsTaken arrays.
+type runListFields struct {
+	RunID       string    `json:"run_id"`
+	GeneratedAt time.Time `json:"generated_at"`
+	DryRun      bool      `json:"dry_run"`
+	Policies    []struct {
+		MatchCount int `json:"match_count"`
+	} `json:"policies"`
+}
+
 func (s *RunStore) List() ([]RunSummary, error) {
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
@@ -62,7 +72,7 @@ func (s *RunStore) List() ([]RunSummary, error) {
 		if err != nil {
 			continue
 		}
-		var r output.FindingsReport
+		var r runListFields
 		if err := json.Unmarshal(data, &r); err != nil {
 			continue
 		}
