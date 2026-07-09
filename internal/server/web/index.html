@@ -9,10 +9,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leash</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+  <link rel="stylesheet" href="/vendor/codemirror.css">
+  <link rel="stylesheet" href="/vendor/codemirror-dracula.css">
+  <script src="/vendor/codemirror.js"></script>
+  <script src="/vendor/codemirror-yaml.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -489,15 +489,15 @@ function resName(props) { return (props && (props.name || props.title || props.e
 
 function ddLink(type, id, props) {
   switch (type) {
-    case 'datadog.monitor':              return id ? appUrl + '/monitors/' + id : null;
-    case 'datadog.slo':                  return id ? appUrl + '/slo?slo_id=' + id : null;
-    case 'datadog.synthetic':            return id ? appUrl + '/synthetics/details/' + id : null;
-    case 'datadog.dashboard':            return id ? appUrl + '/dashboard/' + id : null;
+    case 'datadog.monitor':              return id ? appUrl + '/monitors/' + encodeURIComponent(id) : null;
+    case 'datadog.slo':                  return id ? appUrl + '/slo?slo_id=' + encodeURIComponent(id) : null;
+    case 'datadog.synthetic':            return id ? appUrl + '/synthetics/details/' + encodeURIComponent(id) : null;
+    case 'datadog.dashboard':            return id ? appUrl + '/dashboard/' + encodeURIComponent(id) : null;
     case 'datadog.user':                 return appUrl + '/organization-settings/users';
-    case 'datadog.rum_application':      return id ? appUrl + '/rum/explorer?application_id=' + id : null;
+    case 'datadog.rum_application':      return id ? appUrl + '/rum/explorer?application_id=' + encodeURIComponent(id) : null;
     case 'datadog.rum_retention_filter': {
       const appId = props && props.app_id ? props.app_id : id;
-      return appId ? appUrl + '/rum/explorer?application_id=' + appId : null;
+      return appId ? appUrl + '/rum/explorer?application_id=' + encodeURIComponent(appId) : null;
     }
     default:                             return null;
   }
@@ -519,7 +519,15 @@ function tagsHTML(v) {
 }
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Strict URI-component encoder: like encodeURIComponent but also encodes
+// ! ' ( ) * so the result is safe inside inline JS string literals.
+function encId(s) {
+  return encodeURIComponent(String(s)).replace(/[!'()*]/g, function(c) {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
 
 function skeletonRows(n, cols) {
@@ -643,12 +651,12 @@ function statCard(iconCls, iconSvg, label, value, sub, small) {
 
 function runRow(r) {
   const mc = r.total_matches > 0;
-  return '<tr class="clickable" onclick="location.hash=\'#/runs/' + r.run_id + '\'">' +
+  return '<tr class="clickable" onclick="location.hash=\'#/runs/' + esc(encId(r.run_id)) + '\'">' +
     '<td><div class="fw">' + fmtDate(r.generated_at) + '</div><div class="muted">' + relative(r.generated_at) + '</div></td>' +
     '<td><span class="badge ' + (r.dry_run ? 'badge-dry' : 'badge-live') + '">' + (r.dry_run ? 'Dry Run' : 'Live') + '</span></td>' +
     '<td>' + r.policy_count + '</td>' +
     '<td style="font-weight:' + (mc ? 700 : 400) + '" class="' + (mc ? 'text-er' : '') + '">' + r.total_matches + '</td>' +
-    '<td class="mono muted">' + r.run_id.slice(0,8) + '</td>' +
+    '<td class="mono muted">' + esc(r.run_id.slice(0,8)) + '</td>' +
   '</tr>';
 }
 
@@ -756,7 +764,7 @@ async function pageRunDetail(id) {
             '<div class="match-name">' + esc(name) + '</div>' +
             '<div class="match-id">' + esc(m.id) + '</div>' +
           '</div>' +
-          (link ? '<a class="dd-link" href="' + link + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
+          (link ? '<a class="dd-link" href="' + esc(link) + '" target="_blank" rel="noopener">View in Datadog ' + extIcon + '</a>' : '') +
         '</div>' +
         (rows || actBadges ?
           '<div class="match-body">' +
@@ -867,7 +875,7 @@ async function pagePoliciesList() {
       const parts = p.path.split('/');
       const file  = parts.pop();
       const dir   = parts.join('/') || '.';
-      return '<tr class="clickable" onclick="location.hash=\'#/policies/' + encodeURIComponent(p.path) + '\'">' +
+      return '<tr class="clickable" onclick="location.hash=\'#/policies/' + esc(encId(p.path)) + '\'">' +
         '<td><span class="fw">' + esc(file) + '</span></td>' +
         '<td class="muted mono">' + esc(dir) + '</td>' +
         '<td class="muted" style="text-align:right">' + fmtSize(p.size) + '</td>' +
