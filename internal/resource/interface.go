@@ -25,6 +25,17 @@ type Provider interface {
 	List(ctx context.Context, client *datadog.APIClient) ([]Resource, error)
 }
 
+// ParameterizedProvider is implemented by providers that accept per-policy
+// parameters from the policy's `params:` block.
+type ParameterizedProvider interface {
+	Provider
+	// ListWithParams lists resources using policy-level parameters.
+	// A nil or empty params map must apply the provider's defaults.
+	ListWithParams(ctx context.Context, client *datadog.APIClient, params map[string]any) ([]Resource, error)
+	// ValidateParams checks params without making API calls.
+	ValidateParams(params map[string]any) error
+}
+
 // Taggable is implemented by resources that support adding tags via the API.
 type Taggable interface {
 	AddTags(ctx context.Context, tags []string) error

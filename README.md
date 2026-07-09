@@ -116,6 +116,7 @@ policies:
   - name: string           # required — unique identifier
     description: string    # optional
     resource: string       # required — see Resource types below
+    params: {}             # optional — provider-specific parameters (datadog.audit_event only)
     filters: []            # optional — all filters AND-ed together
     actions: []            # optional — executed in order on each match
 ```
@@ -131,6 +132,7 @@ policies:
 | `datadog.user` | User accounts |
 | `datadog.rum_application` | RUM applications |
 | `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) |
+| `datadog.audit_event` | Audit Trail events (windowed search; see `params`) |
 
 ### Filters
 

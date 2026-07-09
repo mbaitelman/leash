@@ -81,7 +81,22 @@ func buildPolicySchema() map[string]any {
 					"datadog.synthetic",
 					"datadog.dashboard",
 					"datadog.user",
+					"datadog.rum_application",
+					"datadog.rum_retention_filter",
+					"datadog.audit_event",
 				},
+			},
+			"params": map[string]any{
+				"type":        "object",
+				"description": "Provider-specific parameters. Supported by datadog.audit_event: query, lookback, from, to, max_events.",
+				"properties": map[string]any{
+					"query":      map[string]any{"type": "string", "description": "Server-side Audit Logs search query, e.g. '@evt.name:Dashboard'"},
+					"lookback":   map[string]any{"type": "string", "description": "Search window ending at 'to', e.g. '24h', '7d' (mutually exclusive with 'from')"},
+					"from":       map[string]any{"type": "string", "description": "Window start: RFC3339 or Datadog date math, e.g. 'now-24h'"},
+					"to":         map[string]any{"type": "string", "description": "Window end: RFC3339 or Datadog date math (default 'now')"},
+					"max_events": map[string]any{"type": "integer", "description": "Maximum events to fetch (default 1000)"},
+				},
+				"additionalProperties": true,
 			},
 			"filters": map[string]any{
 				"type":  "array",

@@ -2,12 +2,10 @@ package filter
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mbaitelman/leash/internal/resource"
+	"github.com/mbaitelman/leash/internal/timeutil"
 )
 
 func init() {
@@ -34,7 +32,7 @@ func newAgeFilter(spec map[string]any) (Filter, error) {
 		return nil, fmt.Errorf("age filter requires 'value' as a duration string (e.g. '30d', '24h')")
 	}
 
-	dur, err := parseDuration(valStr)
+	dur, err := timeutil.ParseDuration(valStr)
 	if err != nil {
 		return nil, fmt.Errorf("age filter: %w", err)
 	}
@@ -69,16 +67,4 @@ func (f *ageFilter) Match(r resource.Resource) (bool, error) {
 		return age < f.duration, nil
 	}
 	return false, nil
-}
-
-var dayPattern = regexp.MustCompile(`^(\d+)d$`)
-
-// parseDuration supports Go durations plus a "d" (day) suffix.
-func parseDuration(s string) (time.Duration, error) {
-	s = strings.TrimSpace(s)
-	if m := dayPattern.FindStringSubmatch(s); m != nil {
-		days, _ := strconv.Atoi(m[1])
-		return time.Duration(days) * 24 * time.Hour, nil
-	}
-	return time.ParseDuration(s)
 }

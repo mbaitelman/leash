@@ -7,11 +7,14 @@ type PolicyFile struct {
 
 // Policy is one named governance policy.
 type Policy struct {
-	Name        string       `yaml:"name"`
-	Description string       `yaml:"description,omitempty"`
-	Resource    string       `yaml:"resource"`
-	Filters     []FilterSpec `yaml:"filters,omitempty"`
-	Actions     []ActionSpec `yaml:"actions,omitempty"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description,omitempty"`
+	Resource    string `yaml:"resource"`
+	// Params holds provider-specific parameters for resource types that
+	// accept them (see resource.ParameterizedProvider).
+	Params  map[string]any `yaml:"params,omitempty"`
+	Filters []FilterSpec   `yaml:"filters,omitempty"`
+	Actions []ActionSpec   `yaml:"actions,omitempty"`
 }
 
 // FilterSpec is an untyped YAML node. The "type" key selects the filter.
