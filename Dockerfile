@@ -11,5 +11,8 @@ FROM scratch
 COPY --from=builder /leash /leash
 # Required for HTTPS calls to the Datadog API and Slack webhooks
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Run as a non-root user. Note for `serve` mode: a bind-mounted runs directory
+# must be writable by uid 65532 (e.g. mkdir -p runs && chown 65532 runs).
+USER 65532:65532
 ENTRYPOINT ["/leash"]
 CMD ["run"]

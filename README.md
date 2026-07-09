@@ -289,12 +289,15 @@ LEASH_SCHEDULE="0 6 * * *" leash serve     # daily at 06:00 via env var
 
 Additional flags:
 ```
+--host string       Bind address (default: all interfaces; use 127.0.0.1 to restrict to localhost)
 --port string       Port to listen on (default "8080")
 --runs-dir string   Directory for storing run results (default "./runs")
 --schedule string   Cron expression for automatic runs (overrides LEASH_SCHEDULE env var)
 ```
 
 **Schedule precedence:** `--schedule` flag → `LEASH_SCHEDULE` env var → no automatic runs.
+
+> **Security note:** the web UI has no built-in authentication — it can trigger live (non-dry-run) actions and edit policy files. By default it listens on all interfaces; use `--host 127.0.0.1` to keep it local, or put an authenticating reverse proxy in front of it before exposing it beyond your machine. Cross-origin browser requests to the API are rejected.
 
 The schedule uses standard 5-field cron syntax: `minute hour day month weekday`. An invalid expression is rejected at startup before the server begins accepting connections. Each scheduled run uses the same dry-run setting as the server (`--dry-run`, default `true`) and saves its findings to `--runs-dir` like any manual run.
 

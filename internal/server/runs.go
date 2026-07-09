@@ -126,7 +126,7 @@ func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		summaries, err := s.store.List()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeServerError(w, err)
 			return
 		}
 		writeJSON(w, summaries)
@@ -153,7 +153,7 @@ func (s *Server) handleRunByID(w http.ResponseWriter, r *http.Request) {
 		if os.IsNotExist(err) {
 			writeError(w, http.StatusNotFound, "run not found")
 		} else {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeServerError(w, err)
 		}
 		return
 	}
@@ -216,14 +216,14 @@ func (s *Server) triggerRun(w http.ResponseWriter, r *http.Request) {
 
 	report, err := s.executeRun(paths, req.DryRun)
 	if err != nil {
-		status := http.StatusInternalServerError
 		switch {
 		case errors.Is(err, config.ErrCredentials):
-			status = http.StatusServiceUnavailable
+			writeError(w, http.StatusServiceUnavailable, err.Error())
 		case errors.Is(err, errPolicyLoad):
-			status = http.StatusBadRequest
+			writeError(w, http.StatusBadRequest, err.Error())
+		default:
+			writeServerError(w, err)
 		}
-		writeError(w, status, err.Error())
 		return
 	}
 

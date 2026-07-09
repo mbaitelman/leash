@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -23,6 +25,7 @@ var webFiles embed.FS
 
 // Server serves the Leash web UI and REST API.
 type Server struct {
+	host       string // bind address, empty = all interfaces
 	port       string
 	dryRun     bool
 	policyDirs []string
@@ -34,8 +37,9 @@ type Server struct {
 	runMu      sync.Mutex    // serializes runs: scheduled and HTTP-triggered runs never overlap
 }
 
-func New(port, runsDir string, policyDirs []string, dryRun bool, schedule string) *Server {
+func New(host, port, runsDir string, policyDirs []string, dryRun bool, schedule string) *Server {
 	return &Server{
+		host:       host,
 		port:       port,
 		dryRun:     dryRun,
 		policyDirs: policyDirs,
@@ -94,6 +98,36 @@ func (s *Server) httpLogger(next http.Handler) http.Handler {
 	})
 }
 
+// csrfProtect rejects state-changing cross-origin requests to the API.
+// Browsers attach an Origin header to cross-origin requests; if it is present
+// and does not match the request's host, the request came from another site
+// and is refused. Bodied requests must also declare a JSON content type, which
+// stops "simple" cross-origin form/text POSTs that skip the CORS preflight.
+func csrfProtect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		safe := r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions
+		if safe || !strings.HasPrefix(r.URL.Path, "/api/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if origin := r.Header.Get("Origin"); origin != "" {
+			u, err := url.Parse(origin)
+			if err != nil || u.Host == "" || u.Host != r.Host {
+				writeError(w, http.StatusForbidden, "cross-origin request rejected")
+				return
+			}
+		}
+		if r.ContentLength != 0 {
+			ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+			if err != nil || ct != "application/json" {
+				writeError(w, http.StatusUnsupportedMediaType, "Content-Type must be application/json")
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Handler builds the HTTP handler serving the API and the embedded web UI.
 func (s *Server) Handler() (http.Handler, error) {
 	mux := http.NewServeMux()
@@ -122,7 +156,7 @@ func (s *Server) Handler() (http.Handler, error) {
 		fileServer.ServeHTTP(w, r)
 	})
 
-	return s.httpLogger(mux), nil
+	return s.httpLogger(csrfProtect(mux)), nil
 }
 
 func (s *Server) Start(ctx context.Context) error {
@@ -159,7 +193,13 @@ func (s *Server) Start(ctx context.Context) error {
 		return err
 	}
 
-	srv := &http.Server{Addr: ":" + s.port, Handler: handler}
+	srv := &http.Server{
+		Addr:    s.host + ":" + s.port,
+		Handler: handler,
+		// No WriteTimeout/ReadTimeout: the SSE log stream is long-lived.
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
 	go func() {
 		<-ctx.Done()
 		srv.Shutdown(context.Background()) //nolint:errcheck
@@ -196,4 +236,12 @@ func writeError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg}) //nolint:errcheck
+}
+
+// writeServerError logs the full error server-side and returns a generic 500
+// so internal details (filesystem paths, upstream API errors) never reach the
+// client.
+func writeServerError(w http.ResponseWriter, err error) {
+	slog.Error("internal server error", "error", err)
+	writeError(w, http.StatusInternalServerError, "internal server error")
 }
