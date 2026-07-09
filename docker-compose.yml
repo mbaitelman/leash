@@ -10,3 +10,6 @@ services:
       - ./policies:/policies
       - ./runs:/runs
     restart: unless-stopped
+    # The image runs as non-root (uid 65532). Before first start, make the
+    # runs directory writable by that user, otherwise the server exits at
+    # startup:  mkdir -p runs && sudo chown 65532 runs

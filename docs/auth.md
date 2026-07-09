@@ -227,3 +227,5 @@ Leash is stateless — there is no stored session or token cache to flush.
 - **Rotate keys regularly.** Treat API/App keys like passwords — rotate on a schedule and immediately on suspected exposure.
 - **Read-only by default.** The default `--dry-run=true` mode requires only read permissions. Enable write permissions on the App key only when you are ready to run with `--dry-run=false`.
 - **Separate keys per environment.** Use distinct API/App keys for production governance vs. development testing.
+- **Protect the web UI.** `leash serve` has no built-in authentication and can trigger live actions and edit policy files. Bind it to localhost (`--host 127.0.0.1`) or front it with an authenticating reverse proxy before exposing it on a network.
+- **Treat policy files as trusted input.** A policy's `notify` action sends resource metadata to any `webhook_url` the policy specifies. Anyone who can edit policy files (on disk or through the web UI) controls where that data goes — restrict who can modify them accordingly.

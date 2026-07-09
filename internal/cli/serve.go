@@ -31,6 +31,7 @@ Examples:
   leash serve --schedule "0 * * * *"
   LEASH_SCHEDULE="*/30 * * * *" leash serve`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		host, _ := cmd.Flags().GetString("host")
 		port, _ := cmd.Flags().GetString("port")
 		runsDir, _ := cmd.Flags().GetString("runs-dir")
 
@@ -40,7 +41,7 @@ Examples:
 			schedule = os.Getenv("LEASH_SCHEDULE")
 		}
 
-		srv := server.New(port, runsDir, policyPaths, dryRun, schedule)
+		srv := server.New(host, port, runsDir, policyPaths, dryRun, schedule)
 
 		// Determine initial log level.
 		// Precedence: --log-level flag (if explicitly set) > LOG_LEVEL env > "info".
@@ -63,7 +64,11 @@ Examples:
 
 		slog.SetDefault(slog.New(srv.SlogHandler(level)))
 
-		fmt.Printf("Leash UI  →  http://localhost:%s\n", port)
+		displayHost := host
+		if displayHost == "" || displayHost == "0.0.0.0" {
+			displayHost = "localhost"
+		}
+		fmt.Printf("Leash UI  →  http://%s:%s\n", displayHost, port)
 		if schedule != "" {
 			fmt.Printf("Schedule  →  %s\n", schedule)
 		}
@@ -79,6 +84,7 @@ Examples:
 }
 
 func init() {
+	serveCmd.Flags().String("host", "", "Bind address (default: all interfaces; use 127.0.0.1 to restrict to localhost)")
 	serveCmd.Flags().String("port", "8080", "Port to listen on")
 	serveCmd.Flags().String("runs-dir", "./runs", "Directory for storing run results")
 	serveCmd.Flags().String("schedule", "", `Cron expression for automatic runs, e.g. "0 * * * *" (hourly). Overrides LEASH_SCHEDULE env var.`)

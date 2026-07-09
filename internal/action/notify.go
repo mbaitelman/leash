@@ -18,6 +18,9 @@ func init() {
 	Register("notify", newNotifyAction)
 }
 
+// notifyClient bounds webhook delivery so a hung endpoint can't stall a run.
+var notifyClient = &http.Client{Timeout: 15 * time.Second}
+
 type notifyAction struct {
 	webhookURL string
 	channel    string
@@ -63,7 +66,7 @@ func (a *notifyAction) Execute(_ context.Context, r resource.Resource, dryRun bo
 		return fmt.Errorf("notify action: marshaling payload: %w", err)
 	}
 
-	resp, err := http.Post(a.webhookURL, "application/json", bytes.NewReader(body))
+	resp, err := notifyClient.Post(a.webhookURL, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("notify action: sending to Slack: %w", err)
 	}

@@ -17,14 +17,14 @@ import (
 // conflict with each other or with the running dev server.
 func newTestServer(t *testing.T, schedule string) *server.Server {
 	t.Helper()
-	return server.New("0", t.TempDir(), []string{t.TempDir()}, true, schedule)
+	return server.New("", "0", t.TempDir(), []string{t.TempDir()}, true, schedule)
 }
 
 // newTestHandler returns the Server's HTTP handler plus the Server itself, with
 // policies rooted at policyDir.
 func newTestHandler(t *testing.T, policyDir string) (http.Handler, *server.Server) {
 	t.Helper()
-	srv := server.New("0", t.TempDir(), []string{policyDir}, true, "")
+	srv := server.New("", "0", t.TempDir(), []string{policyDir}, true, "")
 	h, err := srv.Handler()
 	if err != nil {
 		t.Fatalf("Handler() error: %v", err)
@@ -33,12 +33,14 @@ func newTestHandler(t *testing.T, policyDir string) (http.Handler, *server.Serve
 }
 
 // do performs a request against the handler and returns the recorded response.
+// Bodied requests are sent as application/json, matching the web UI.
 func do(h http.Handler, method, target, body string) *httptest.ResponseRecorder {
 	var r *http.Request
 	if body == "" {
 		r = httptest.NewRequest(method, target, nil)
 	} else {
 		r = httptest.NewRequest(method, target, strings.NewReader(body))
+		r.Header.Set("Content-Type", "application/json")
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -208,6 +210,64 @@ func TestPolicySave_SchemaValidation(t *testing.T) {
 		w := put("policies: []\n")
 		if w.Code != http.StatusNoContent {
 			t.Errorf("expected 204, got %d: %s", w.Code, w.Body)
+		}
+	})
+}
+
+func TestCSRFProtection(t *testing.T) {
+	h, _ := newTestHandler(t, t.TempDir())
+
+	t.Run("cross-origin POST rejected", func(t *testing.T) {
+		r := httptest.NewRequest(http.MethodPost, "/api/runs", nil)
+		r.Header.Set("Origin", "http://evil.example")
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusForbidden {
+			t.Errorf("expected 403 for cross-origin POST, got %d: %s", w.Code, w.Body)
+		}
+	})
+
+	t.Run("null origin rejected", func(t *testing.T) {
+		r := httptest.NewRequest(http.MethodPut, "/api/log-level", strings.NewReader(`{"level":"DEBUG"}`))
+		r.Header.Set("Origin", "null")
+		r.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusForbidden {
+			t.Errorf("expected 403 for null origin, got %d: %s", w.Code, w.Body)
+		}
+	})
+
+	t.Run("same-origin POST passes", func(t *testing.T) {
+		t.Setenv("DD_API_KEY", "")
+		t.Setenv("DD_APP_KEY", "")
+		r := httptest.NewRequest(http.MethodPost, "/api/runs", nil)
+		r.Header.Set("Origin", "http://"+r.Host)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		// Passes CSRF and reaches the handler, which fails on missing credentials.
+		if w.Code != http.StatusServiceUnavailable {
+			t.Errorf("expected 503 (past CSRF, missing credentials), got %d: %s", w.Code, w.Body)
+		}
+	})
+
+	t.Run("non-JSON body rejected", func(t *testing.T) {
+		r := httptest.NewRequest(http.MethodPost, "/api/runs", strings.NewReader(`{"dry_run":false}`))
+		r.Header.Set("Content-Type", "text/plain")
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusUnsupportedMediaType {
+			t.Errorf("expected 415 for text/plain body, got %d: %s", w.Code, w.Body)
+		}
+	})
+
+	t.Run("cross-origin GET still allowed", func(t *testing.T) {
+		r := httptest.NewRequest(http.MethodGet, "/api/runs", nil)
+		r.Header.Set("Origin", "http://evil.example")
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Errorf("expected 200 for GET regardless of origin, got %d: %s", w.Code, w.Body)
 		}
 	})
 }
