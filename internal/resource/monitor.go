@@ -21,14 +21,15 @@ func (p *monitorProvider) ResourceType() string { return "datadog.monitor" }
 
 func (p *monitorProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV1.NewMonitorsApi(client)
-	monitors, _, err := api.ListMonitors(ctx, *datadogV1.NewListMonitorsOptionalParameters().WithPageSize(1000))
-	if err != nil {
-		return nil, fmt.Errorf("listing monitors: %w", err)
-	}
+	items, cancel := api.ListMonitorsWithPagination(ctx, *datadogV1.NewListMonitorsOptionalParameters().WithPageSize(1000))
+	defer cancel()
 
-	resources := make([]Resource, 0, len(monitors))
-	for i := range monitors {
-		resources = append(resources, &monitorResource{inner: monitors[i], client: client})
+	var resources []Resource
+	for item := range items {
+		if item.Error != nil {
+			return nil, fmt.Errorf("listing monitors: %w", item.Error)
+		}
+		resources = append(resources, &monitorResource{inner: item.Item, client: client})
 	}
 	return resources, nil
 }

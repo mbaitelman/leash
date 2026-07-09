@@ -21,6 +21,8 @@ func (p *rumRetentionFilterProvider) ResourceType() string { return "datadog.rum
 
 func (p *rumRetentionFilterProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	rumAPI := datadogV2.NewRUMApi(client)
+	// Neither GetRUMApplications nor ListRetentionFilters is paginated:
+	// both endpoints return all results in a single response.
 	appsResp, _, err := rumAPI.GetRUMApplications(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing RUM applications for retention filters: %w", err)

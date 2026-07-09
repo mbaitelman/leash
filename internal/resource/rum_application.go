@@ -21,6 +21,8 @@ func (p *rumApplicationProvider) ResourceType() string { return "datadog.rum_app
 
 func (p *rumApplicationProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV2.NewRUMApi(client)
+	// GetRUMApplications is not paginated: the endpoint takes no page
+	// parameters and returns all applications in a single response.
 	resp, _, err := api.GetRUMApplications(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing RUM applications: %w", err)

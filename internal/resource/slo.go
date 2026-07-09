@@ -21,15 +21,15 @@ func (p *sloProvider) ResourceType() string { return "datadog.slo" }
 
 func (p *sloProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV1.NewServiceLevelObjectivesApi(client)
-	resp, _, err := api.ListSLOs(ctx, *datadogV1.NewListSLOsOptionalParameters())
-	if err != nil {
-		return nil, fmt.Errorf("listing SLOs: %w", err)
-	}
+	items, cancel := api.ListSLOsWithPagination(ctx)
+	defer cancel()
 
-	data := resp.GetData()
-	resources := make([]Resource, 0, len(data))
-	for i := range data {
-		resources = append(resources, &sloResource{inner: data[i], client: client})
+	var resources []Resource
+	for item := range items {
+		if item.Error != nil {
+			return nil, fmt.Errorf("listing SLOs: %w", item.Error)
+		}
+		resources = append(resources, &sloResource{inner: item.Item, client: client})
 	}
 	return resources, nil
 }

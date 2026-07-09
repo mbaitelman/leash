@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/mbaitelman/leash/internal/policy"
 )
 
 // PolicyFile is a YAML policy file discovered on disk.
@@ -84,9 +84,10 @@ func (s *PolicyStore) Read(displayPath string) (string, error) {
 }
 
 func (s *PolicyStore) Write(displayPath, content string) error {
-	var dummy any
-	if err := yaml.Unmarshal([]byte(content), &dummy); err != nil {
-		return fmt.Errorf("invalid YAML: %w", err)
+	// Validate against the real policy schema so structurally invalid policies
+	// are rejected at save time instead of failing at run time.
+	if _, err := policy.Parse([]byte(content), displayPath); err != nil {
+		return err
 	}
 	abs, err := s.Resolve(displayPath)
 	if err != nil {
