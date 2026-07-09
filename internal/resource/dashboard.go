@@ -21,14 +21,15 @@ func (p *dashboardProvider) ResourceType() string { return "datadog.dashboard" }
 
 func (p *dashboardProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV1.NewDashboardsApi(client)
-	listResp, _, err := api.ListDashboards(ctx, *datadogV1.NewListDashboardsOptionalParameters())
-	if err != nil {
-		return nil, fmt.Errorf("listing dashboards: %w", err)
-	}
+	items, cancel := api.ListDashboardsWithPagination(ctx)
+	defer cancel()
 
-	resources := make([]Resource, 0, len(listResp.GetDashboards()))
-	for _, summary := range listResp.GetDashboards() {
-		id := summary.GetId()
+	var resources []Resource
+	for item := range items {
+		if item.Error != nil {
+			return nil, fmt.Errorf("listing dashboards: %w", item.Error)
+		}
+		id := item.Item.GetId()
 		full, _, err := api.GetDashboard(ctx, id)
 		if err != nil {
 			slog.Warn("failed to get dashboard details", "id", id, "error", err)

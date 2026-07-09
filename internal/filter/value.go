@@ -13,10 +13,10 @@ func init() {
 }
 
 type valueFilter struct {
-	key    string
-	op     string
-	value  any
-	regex  *regexp.Regexp
+	key   string
+	op    string
+	value any
+	regex *regexp.Regexp
 }
 
 func newValueFilter(spec map[string]any) (Filter, error) {
@@ -64,9 +64,9 @@ func (f *valueFilter) Match(r resource.Resource) (bool, error) {
 
 	switch f.op {
 	case "eq":
-		return fmt.Sprintf("%v", target) == fmt.Sprintf("%v", f.value), nil
+		return matchEqual(target, f.value), nil
 	case "ne":
-		return fmt.Sprintf("%v", target) != fmt.Sprintf("%v", f.value), nil
+		return !matchEqual(target, f.value), nil
 	case "contains":
 		return matchContains(target, f.value), nil
 	case "not-contains":
@@ -83,6 +83,37 @@ func (f *valueFilter) Match(r resource.Resource) (bool, error) {
 		return matchNumeric(f.op, target, f.value)
 	default:
 		return false, fmt.Errorf("unknown value filter op %q", f.op)
+	}
+}
+
+// matchEqual compares two values, numerically when both sides are numbers
+// (so an int property 1 equals a YAML float 1.0), otherwise by their string
+// representations.
+func matchEqual(target, value any) bool {
+	if t, ok := toFloat(target); ok {
+		if v, ok := toFloat(value); ok {
+			return t == v
+		}
+	}
+	return fmt.Sprintf("%v", target) == fmt.Sprintf("%v", value)
+}
+
+// toFloat converts a numeric value to float64, reporting whether the value
+// was numeric.
+func toFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	case float32:
+		return float64(n), true
+	case float64:
+		return n, true
+	default:
+		return 0, false
 	}
 }
 
@@ -127,26 +158,13 @@ func matchIn(target, list any) bool {
 }
 
 func matchNumeric(op string, target, value any) (bool, error) {
-	toFloat := func(v any) (float64, error) {
-		switch n := v.(type) {
-		case int:
-			return float64(n), nil
-		case int64:
-			return float64(n), nil
-		case float64:
-			return n, nil
-		default:
-			return 0, fmt.Errorf("cannot compare non-numeric value %v (%T)", v, v)
-		}
+	t, ok := toFloat(target)
+	if !ok {
+		return false, fmt.Errorf("value filter: target cannot compare non-numeric value %v (%T)", target, target)
 	}
-
-	t, err := toFloat(target)
-	if err != nil {
-		return false, fmt.Errorf("value filter: target %w", err)
-	}
-	v, err := toFloat(value)
-	if err != nil {
-		return false, fmt.Errorf("value filter: comparison %w", err)
+	v, ok := toFloat(value)
+	if !ok {
+		return false, fmt.Errorf("value filter: comparison cannot compare non-numeric value %v (%T)", value, value)
 	}
 
 	switch op {

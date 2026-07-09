@@ -20,15 +20,15 @@ func (p *userProvider) ResourceType() string { return "datadog.user" }
 
 func (p *userProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV2.NewUsersApi(client)
-	resp, _, err := api.ListUsers(ctx, *datadogV2.NewListUsersOptionalParameters().WithPageSize(500))
-	if err != nil {
-		return nil, fmt.Errorf("listing users: %w", err)
-	}
+	items, cancel := api.ListUsersWithPagination(ctx, *datadogV2.NewListUsersOptionalParameters().WithPageSize(500))
+	defer cancel()
 
-	users := resp.GetData()
-	resources := make([]Resource, 0, len(users))
-	for i := range users {
-		resources = append(resources, &userResource{inner: users[i], client: client})
+	var resources []Resource
+	for item := range items {
+		if item.Error != nil {
+			return nil, fmt.Errorf("listing users: %w", item.Error)
+		}
+		resources = append(resources, &userResource{inner: item.Item, client: client})
 	}
 	return resources, nil
 }

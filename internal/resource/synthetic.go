@@ -21,19 +21,19 @@ func (p *syntheticProvider) ResourceType() string { return "datadog.synthetic" }
 
 func (p *syntheticProvider) List(ctx context.Context, client *datadog.APIClient) ([]Resource, error) {
 	api := datadogV1.NewSyntheticsApi(client)
-	resp, _, err := api.ListTests(ctx, *datadogV1.NewListTestsOptionalParameters())
-	if err != nil {
-		return nil, fmt.Errorf("listing synthetics: %w", err)
-	}
+	items, cancel := api.ListTestsWithPagination(ctx)
+	defer cancel()
 
 	// Pre-fetch SLO monitor IDs so each synthetic knows if it's covered.
 	linkedMonitors := sloLinkedMonitorIDs(ctx, client)
 
-	tests := resp.GetTests()
-	resources := make([]Resource, 0, len(tests))
-	for i := range tests {
+	var resources []Resource
+	for item := range items {
+		if item.Error != nil {
+			return nil, fmt.Errorf("listing synthetics: %w", item.Error)
+		}
 		resources = append(resources, &syntheticResource{
-			inner:          tests[i],
+			inner:          item.Item,
 			client:         client,
 			linkedMonitors: linkedMonitors,
 		})
@@ -45,14 +45,16 @@ func (p *syntheticProvider) List(ctx context.Context, client *datadog.APIClient)
 // least one SLO. Used to determine whether a synthetic test is SLO-backed.
 func sloLinkedMonitorIDs(ctx context.Context, client *datadog.APIClient) map[int64]struct{} {
 	api := datadogV1.NewServiceLevelObjectivesApi(client)
-	resp, _, err := api.ListSLOs(ctx, *datadogV1.NewListSLOsOptionalParameters())
-	if err != nil {
-		slog.Warn("failed to fetch SLOs for synthetic linkage check", "error", err)
-		return map[int64]struct{}{}
-	}
+	items, cancel := api.ListSLOsWithPagination(ctx)
+	defer cancel()
+
 	ids := make(map[int64]struct{})
-	for _, slo := range resp.GetData() {
-		for _, mid := range slo.GetMonitorIds() {
+	for item := range items {
+		if item.Error != nil {
+			slog.Warn("failed to fetch SLOs for synthetic linkage check", "error", item.Error)
+			return map[int64]struct{}{}
+		}
+		for _, mid := range item.Item.GetMonitorIds() {
 			ids[mid] = struct{}{}
 		}
 	}

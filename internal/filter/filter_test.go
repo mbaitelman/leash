@@ -75,6 +75,40 @@ func TestValueFilter_Ne(t *testing.T) {
 	mustNotMatch(t, f, fake("name", "prod"))
 }
 
+func TestValueFilter_EqNe_Numeric(t *testing.T) {
+	tests := []struct {
+		name   string
+		op     string
+		value  any // filter value (e.g. from YAML)
+		target any // property value on the resource
+		want   bool
+	}{
+		{"eq int property vs float value", "eq", float64(1), int(1), true},
+		{"eq int64 property vs float value", "eq", float64(1), int64(1), true},
+		{"eq float property vs int value", "eq", int(1), float64(1.0), true},
+		{"eq float property vs float value", "eq", float64(1.5), float64(1.5), true},
+		{"eq differing numbers", "eq", float64(1), int(2), false},
+		{"eq int property vs non-integral float", "eq", float64(1.5), int(1), false},
+		{"ne int property vs float value", "ne", float64(1), int(1), false},
+		{"ne int64 property vs float value", "ne", float64(1), int64(1), false},
+		{"ne differing numbers", "ne", float64(1), int(2), true},
+		{"eq number vs numeric string falls back to string compare", "eq", "1", int(1), true},
+		{"eq strings still compare as strings", "eq", "prod", "prod", true},
+		{"ne strings still compare as strings", "ne", "prod", "staging", true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := buildFilter(t, "type", "value", "key", "count", "op", tc.op, "value", tc.value)
+			r := fake("count", tc.target)
+			if tc.want {
+				mustMatch(t, f, r)
+			} else {
+				mustNotMatch(t, f, r)
+			}
+		})
+	}
+}
+
 func TestValueFilter_Present(t *testing.T) {
 	f := buildFilter(t, "type", "value", "key", "name", "op", "present")
 	mustMatch(t, f, fake("name", "anything"))
