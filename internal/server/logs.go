@@ -147,12 +147,20 @@ func (s *Server) handleLogLevel(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogs handles GET /api/logs — returns recent log entries.
-func (s *Server) handleLogs(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
 	writeJSON(w, s.logBuf.recent(200))
 }
 
 // handleLogStream handles GET /api/logs/stream — SSE stream of log entries.
 func (s *Server) handleLogStream(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		writeError(w, http.StatusInternalServerError, "streaming not supported")
@@ -184,7 +192,11 @@ func (s *Server) handleLogStream(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleConfig handles GET /api/config — exposes runtime config to the frontend.
-func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
 	site := os.Getenv("DD_SITE")
 	if site == "" {
 		site = "datadoghq.com"

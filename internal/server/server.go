@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mbaitelman/leash/internal/output"
@@ -30,6 +31,7 @@ type Server struct {
 	policies   *PolicyStore
 	logBuf     *LogBuffer
 	logLevel   slog.LevelVar // adjustable at runtime via PUT /api/log-level
+	runMu      sync.Mutex    // serializes runs: scheduled and HTTP-triggered runs never overlap
 }
 
 func New(port, runsDir string, policyDirs []string, dryRun bool, schedule string) *Server {
@@ -92,25 +94,8 @@ func (s *Server) httpLogger(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) Start(ctx context.Context) error {
-	if s.schedule != "" {
-		c := cron.New()
-		if _, err := c.AddFunc(s.schedule, func() {
-			slog.Info("scheduled run starting", "schedule", s.schedule)
-			report, err := s.executeRun(s.policyDirs, s.dryRun)
-			if err != nil {
-				slog.Error("scheduled run failed", "error", err)
-				return
-			}
-			slog.Info("scheduled run complete", "run_id", report.RunID, "matches", totalMatches(report))
-		}); err != nil {
-			return fmt.Errorf("invalid cron schedule %q: %w", s.schedule, err)
-		}
-		c.Start()
-		defer c.Stop()
-		slog.Info("scheduled runs enabled", "schedule", s.schedule)
-	}
-
+// Handler builds the HTTP handler serving the API and the embedded web UI.
+func (s *Server) Handler() (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// API routes — order matters: specific prefix before generic
@@ -126,7 +111,7 @@ func (s *Server) Start(ctx context.Context) error {
 	// Static SPA — serve index.html for any path without a file extension
 	sub, err := fs.Sub(webFiles, "web")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fileServer := http.FileServer(http.FS(sub))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +122,44 @@ func (s *Server) Start(ctx context.Context) error {
 		fileServer.ServeHTTP(w, r)
 	})
 
-	srv := &http.Server{Addr: ":" + s.port, Handler: s.httpLogger(mux)}
+	return s.httpLogger(mux), nil
+}
+
+func (s *Server) Start(ctx context.Context) error {
+	// Fail fast if run results cannot be persisted.
+	if err := s.store.ensureDir(); err != nil {
+		return err
+	}
+
+	if s.schedule != "" {
+		c := cron.New()
+		if _, err := c.AddFunc(s.schedule, func() {
+			if !s.runMu.TryLock() {
+				slog.Warn("skipping scheduled run: a run is already in progress", "schedule", s.schedule)
+				return
+			}
+			defer s.runMu.Unlock()
+			slog.Info("scheduled run starting", "schedule", s.schedule)
+			report, err := s.executeRun(s.policyDirs, s.dryRun)
+			if err != nil {
+				slog.Error("scheduled run failed", "error", err)
+				return
+			}
+			slog.Info("scheduled run complete", "run_id", report.RunID, "matches", totalMatches(report))
+		}); err != nil {
+			return fmt.Errorf("invalid cron schedule %q: %w", s.schedule, err)
+		}
+		c.Start()
+		defer c.Stop()
+		slog.Info("scheduled runs enabled", "schedule", s.schedule)
+	}
+
+	handler, err := s.Handler()
+	if err != nil {
+		return err
+	}
+
+	srv := &http.Server{Addr: ":" + s.port, Handler: handler}
 	go func() {
 		<-ctx.Done()
 		srv.Shutdown(context.Background()) //nolint:errcheck

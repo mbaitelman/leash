@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,6 +19,10 @@ import (
 	"github.com/mbaitelman/leash/internal/policy"
 )
 
+// errPolicyLoad marks failures to load or parse policy files so HTTP handlers
+// can map them to a 400 response via errors.Is.
+var errPolicyLoad = errors.New("loading policies")
+
 // RunSummary is a lightweight row for the runs list.
 type RunSummary struct {
 	RunID        string    `json:"run_id"`
@@ -30,8 +36,16 @@ type RunSummary struct {
 type RunStore struct{ dir string }
 
 func NewRunStore(dir string) *RunStore {
-	os.MkdirAll(dir, 0o755) //nolint:errcheck
 	return &RunStore{dir: dir}
+}
+
+// ensureDir creates the store's directory if it does not exist. Called from
+// Server.Start so the server fails fast when runs cannot be persisted.
+func (s *RunStore) ensureDir() error {
+	if err := os.MkdirAll(s.dir, 0o755); err != nil {
+		return fmt.Errorf("creating runs directory %q: %w", s.dir, err)
+	}
+	return nil
 }
 
 func (s *RunStore) Save(r *output.FindingsReport) error {
@@ -130,6 +144,10 @@ func (s *Server) handleRunByID(w http.ResponseWriter, r *http.Request) {
 		s.handleRuns(w, r)
 		return
 	}
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
 	run, err := s.store.Get(id)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -148,12 +166,12 @@ func (s *Server) handleRunByID(w http.ResponseWriter, r *http.Request) {
 func (s *Server) executeRun(policyPaths []string, dryRun bool) (*output.FindingsReport, error) {
 	policies, err := policy.LoadPaths(policyPaths)
 	if err != nil {
-		return nil, fmt.Errorf("loading policies: %w", err)
+		return nil, fmt.Errorf("%w: %w", errPolicyLoad, err)
 	}
 
 	client, ctx, err := config.BuildClient()
 	if err != nil {
-		return nil, fmt.Errorf("Datadog credentials not configured: %w", err)
+		return nil, err // wraps config.ErrCredentials
 	}
 
 	report, err := engine.New(ctx, client).Run(policies, dryRun)
@@ -173,7 +191,11 @@ func (s *Server) triggerRun(w http.ResponseWriter, r *http.Request) {
 		PolicyPath string `json:"policy_path"` // optional: run a single file
 	}
 	req.DryRun = s.dryRun
-	json.NewDecoder(r.Body).Decode(&req) //nolint:errcheck
+	// An empty body means "no overrides"; anything else must be valid JSON.
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
+		writeError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
+		return
+	}
 
 	paths := s.policyDirs
 	if req.PolicyPath != "" {
@@ -185,12 +207,20 @@ func (s *Server) triggerRun(w http.ResponseWriter, r *http.Request) {
 		paths = []string{abs}
 	}
 
+	// Only one run (scheduled or HTTP-triggered) may execute at a time.
+	if !s.runMu.TryLock() {
+		writeError(w, http.StatusConflict, "a run is already in progress")
+		return
+	}
+	defer s.runMu.Unlock()
+
 	report, err := s.executeRun(paths, req.DryRun)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "credentials") {
+		switch {
+		case errors.Is(err, config.ErrCredentials):
 			status = http.StatusServiceUnavailable
-		} else if strings.Contains(err.Error(), "loading policies") {
+		case errors.Is(err, errPolicyLoad):
 			status = http.StatusBadRequest
 		}
 		writeError(w, status, err.Error())
