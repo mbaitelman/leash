@@ -8,6 +8,14 @@
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <meta property="og:title" content="Leash — Governance-as-code for Datadog">
 <meta property="og:description" content="Define policies in YAML. Leash scans your Datadog organization and reports — or remediates — resources that violate them.">
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-740Z1RRMCP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-740Z1RRMCP');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -126,7 +134,7 @@
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
   h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
-  h2 { font-size: 1.9rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+  h2 { font-size: clamp(1.5rem, 4.5vw, 1.9rem); font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
   h3 { font-size: 1.1rem; font-weight: 600; line-height: 1.35; }
   .eyebrow {
     font-family: var(--mono);
@@ -175,7 +183,11 @@
     :root:not([data-theme]) .icon-moon { display: none; }
     :root:not([data-theme]) .icon-sun { display: block; }
   }
-  @media (max-width: 720px) { .nav-links a:not(.gh) { display: none; } }
+  @media (max-width: 720px) {
+    .nav { gap: 12px; }
+    .nav-links { gap: 10px; }
+    .nav-links a:not(.gh) { display: none; }
+  }
 
   /* ---------- hero ---------- */
   .hero { padding: 72px 0 64px; }
@@ -185,7 +197,7 @@
   }
   @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
   .hero h1 {
-    font-size: clamp(2.3rem, 5.2vw, 3.4rem);
+    font-size: clamp(2rem, 7vw, 3.4rem);
     font-weight: 700; line-height: 1.06; letter-spacing: -0.015em;
   }
   .hero h1 em { font-style: normal; color: var(--accent); }
@@ -359,6 +371,26 @@
     border-radius: 99px; padding: 3px 10px;
   }
   .pill-dry { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 600px) {
+    .wrap { padding: 0 18px; }
+    [id] { scroll-margin-top: 64px; }
+    .hero { padding: 44px 0 40px; }
+    .hero .lede { font-size: 1.04rem; }
+    .hero-ctas .btn { flex: 1 1 auto; justify-content: center; }
+    .hero-facts { gap: 8px 20px; margin-top: 1.8rem; }
+    section { padding: 48px 0; }
+    .steps, .feature-grid, .ui-shots, .qs-grid { gap: 14px; margin-top: 1.8rem; }
+    .step { padding: 18px 18px 4px; }
+    .feature { padding: 18px; }
+    .code-card pre { padding: 14px 16px; font-size: .78rem; }
+    .resource { gap: 4px 14px; }
+    footer.site { padding: 36px 0 44px; }
+    .foot-grid { gap: 24px 40px; }
+    .foot-cols { gap: 32px 48px; }
+    .foot-note { margin-top: 28px; flex-direction: column; gap: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -440,7 +472,7 @@
   <section id="how">
     <div class="wrap">
       <p class="eyebrow">How it works</p>
-      <h2>Write it down. Run it. Let the findings flow.</h2>
+      <h2>Write it down. Run it. Leash takes it from there.</h2>
       <p class="section-intro">A policy names a resource type, filters that select matching resources, and actions to take on each match. Everything else — pagination, auth, retries — is Leash's problem.</p>
       <div class="steps">
         <div class="step">
@@ -452,17 +484,18 @@
         </div>
         <div class="step">
           <span class="n">STEP 2</span>
-          <h3>Run it</h3>
-          <p>Leash queries the Datadog API, applies your filters, and executes actions on every match.</p>
+          <h3>Dry-run it</h3>
+          <p>Leash queries the Datadog API and applies your filters. The first run is a dry run — see every match and what would happen, with zero changes.</p>
           <div class="code-card"><pre><code><span class="prompt">$</span> leash run --policy ./policies/
 <span class="out">3 matches · dry run · 0 mutations</span></code></pre></div>
         </div>
         <div class="step">
           <span class="n">STEP 3</span>
-          <h3>Act on findings</h3>
-          <p>Runs emit a structured JSON findings report — stable, diffable, and ready for dashboards or alerting pipelines.</p>
-          <div class="code-card"><pre><code><span class="p">{</span> <span class="k">"policy_name"</span><span class="p">:</span> <span class="s">"prod-monitors…"</span><span class="p">,</span>
-  <span class="k">"match_count"</span><span class="p">:</span> <span class="l">3</span><span class="p">, …}</span></code></pre></div>
+          <h3>Turn on enforcement</h3>
+          <p>Happy with the matches? Drop the dry run and your policy's actions take over — Slack notifications, tags, remediation. No glue scripts required.</p>
+          <div class="code-card"><pre><code><span class="prompt">$</span> leash run --policy ./policies/ \
+    --dry-run=false
+<span class="out">✓ notified slack · ✓ tagged 3 monitors</span></code></pre></div>
         </div>
       </div>
     </div>
@@ -472,7 +505,7 @@
     <div class="wrap">
       <p class="eyebrow">The policy language</p>
       <h2>Small vocabulary, sharp expressions.</h2>
-      <p class="section-intro">Filters are AND-ed by default and composable with boolean logic. Actions run in order on every match.</p>
+      <p class="section-intro">Filters are AND-ed by default and composable with boolean logic. Actions run in order on every match. <a href="https://github.com/mbaitelman/leash/tree/main/policies/examples">Browse the example policies →</a></p>
       <div class="feature-grid">
         <div class="feature">
           <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg></div>
@@ -605,7 +638,6 @@
           <figcaption>Logs — live streaming while a run is in flight.</figcaption>
         </figure>
       </div>
-      <p class="qs-note">The UI ships with no built-in authentication — keep it on <code>127.0.0.1</code> or behind an authenticating reverse proxy. <a href="https://github.com/mbaitelman/leash#leash-serve">Details in the README.</a></p>
     </div>
   </section>
 
@@ -661,11 +693,13 @@
       <div>
         <div class="foot-brand"><img src="assets/logo.svg" alt="">Leash</div>
         <p style="max-width: 34ch; margin: 12px 0 0;">Governance-as-code for Datadog. Inspired by <a href="https://cloudcustodian.io">Cloud Custodian</a>.</p>
+        <p style="margin: 8px 0 0;">Built by <a href="https://www.linkedin.com/in/mbaitelman">Mendy Baitelman</a>.</p>
       </div>
       <div class="foot-cols">
         <div class="foot-col">
           <span class="h">Docs</span>
           <a href="https://github.com/mbaitelman/leash/blob/main/docs/policies.md">Policy syntax</a>
+          <a href="https://github.com/mbaitelman/leash/tree/main/policies/examples">Example policies</a>
           <a href="https://github.com/mbaitelman/leash/blob/main/docs/auth.md">Authentication</a>
           <a href="https://github.com/mbaitelman/leash/blob/main/docs/pup.md">Provisioning keys with pup</a>
           <a href="https://github.com/mbaitelman/leash/blob/main/docs/testing.md">Testing</a>
@@ -675,6 +709,7 @@
           <a href="https://github.com/mbaitelman/leash">GitHub</a>
           <a href="https://github.com/mbaitelman/leash/issues">Issues</a>
           <a href="https://github.com/mbaitelman/leash/pkgs/container/leash">Container image</a>
+          <a href="https://www.linkedin.com/in/mbaitelman">LinkedIn</a>
         </div>
       </div>
     </div>
