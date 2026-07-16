@@ -22,7 +22,7 @@ const userJSON = `{
 		"service_account": false,
 		"disabled": false,
 		"mfa_enabled": false,
-		"allowed_login_methods": ["saml", "google_oauth"],
+		"allowed_login_methods": ["saml", "google_oidc"],
 		"status": "Active"
 	}
 }`
@@ -45,7 +45,7 @@ func TestAllowedLoginMethodsFromAdditionalProperties(t *testing.T) {
 	if !ok {
 		t.Fatal("Properties() missing allowed_login_methods")
 	}
-	want := []string{"saml", "google_oauth"}
+	want := []string{"saml", "google_oidc"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %#v (%T), want %#v", got, got, want)
 	}
