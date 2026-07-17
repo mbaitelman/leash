@@ -74,6 +74,28 @@ func (r *userResource) Properties() map[string]any {
 	if attrs.ServiceAccount != nil {
 		props["service_account"] = *attrs.ServiceAccount
 	}
+	if attrs.MfaEnabled != nil {
+		props["mfa_enabled"] = *attrs.MfaEnabled
+	}
+	if attrs.Verified != nil {
+		props["verified"] = *attrs.Verified
+	}
+	if v := attrs.LastLoginTime.Get(); v != nil {
+		props["last_login"] = *v
+	}
+	// The SDK does not model allowed_login_methods (as of v2.61.0), but the
+	// API returns it; unrecognized attributes land in AdditionalProperties.
+	if v, ok := attrs.AdditionalProperties["allowed_login_methods"]; ok {
+		if items, ok := v.([]any); ok {
+			methods := make([]string, 0, len(items))
+			for _, item := range items {
+				if s, ok := item.(string); ok {
+					methods = append(methods, s)
+				}
+			}
+			props["allowed_login_methods"] = methods
+		}
+	}
 	return props
 }
 
