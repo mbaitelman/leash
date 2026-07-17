@@ -94,7 +94,7 @@ func buildPolicySchema() map[string]any {
 					"properties": map[string]any{
 						"type": map[string]any{
 							"type": "string",
-							"enum": []string{"report", "notify", "tag", "delete"},
+							"enum": []string{"report", "notify", "tag", "delete", "user.disable"},
 						},
 					},
 					"required": []string{"type"},

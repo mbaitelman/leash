@@ -21,6 +21,7 @@ type fakeResource struct {
 	addTagFn    func([]string) error
 	removeTagFn func([]string) error
 	deleteFn    func() error
+	disableFn   func() error
 }
 
 func (r *fakeResource) Type() string               { return r.resType }
@@ -48,6 +49,14 @@ func (r *fakeResource) RemoveTags(_ context.Context, tags []string) error {
 func (r *fakeResource) Delete(_ context.Context) error {
 	if r.deleteFn != nil {
 		return r.deleteFn()
+	}
+	return nil
+}
+
+// Disable makes fakeResource implement the user.disable action's Disable interface.
+func (r *fakeResource) Disable(_ context.Context) error {
+	if r.disableFn != nil {
+		return r.disableFn()
 	}
 	return nil
 }
@@ -358,6 +367,89 @@ func TestDeleteAction_PropagatesDeleteError(t *testing.T) {
 	boom := errors.New("API error")
 	r := resource("abc", nil)
 	r.deleteFn = func() error { return boom }
+
+	err := act.Execute(context.Background(), r, false)
+	if !errors.Is(err, boom) {
+		t.Errorf("expected wrapped boom error, got %v", err)
+	}
+}
+
+// ── user.disable action ────────────────────────────────────────────────────────
+
+func TestUserDisableAction_Unconfirmed(t *testing.T) {
+	factory, _ := action.Get("user.disable")
+	act, err := factory(map[string]any{"type": "user.disable"}) // no confirm
+	if err != nil {
+		t.Fatalf("factory: %v", err)
+	}
+
+	r := resource("abc", nil)
+	r.resType = "datadog.user"
+	err = act.Execute(context.Background(), r, false)
+	if err == nil {
+		t.Error("expected error when confirm is not set")
+	}
+}
+
+func TestUserDisableAction_DryRun_NoAPICall(t *testing.T) {
+	factory, _ := action.Get("user.disable")
+	act, _ := factory(map[string]any{"type": "user.disable", "confirm": true})
+
+	called := false
+	r := resource("abc", nil)
+	r.resType = "datadog.user"
+	r.disableFn = func() error {
+		called = true
+		return nil
+	}
+
+	if err := act.Execute(context.Background(), r, true); err != nil {
+		t.Fatalf("Execute dry-run: %v", err)
+	}
+	if called {
+		t.Error("Disable should not be called in dry-run mode")
+	}
+}
+
+func TestUserDisableAction_CallsDisable(t *testing.T) {
+	factory, _ := action.Get("user.disable")
+	act, _ := factory(map[string]any{"type": "user.disable", "confirm": true})
+
+	called := false
+	r := resource("abc", nil)
+	r.resType = "datadog.user"
+	r.disableFn = func() error {
+		called = true
+		return nil
+	}
+
+	if err := act.Execute(context.Background(), r, false); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !called {
+		t.Error("Disable was not called")
+	}
+}
+
+func TestUserDisableAction_WrongResourceType(t *testing.T) {
+	factory, _ := action.Get("user.disable")
+	act, _ := factory(map[string]any{"type": "user.disable", "confirm": true})
+
+	r := resource("abc", nil) // defaults to "fake.resource", not "datadog.user"
+	err := act.Execute(context.Background(), r, false)
+	if err == nil {
+		t.Error("expected error for non-datadog.user resource")
+	}
+}
+
+func TestUserDisableAction_PropagatesDisableError(t *testing.T) {
+	factory, _ := action.Get("user.disable")
+	act, _ := factory(map[string]any{"type": "user.disable", "confirm": true})
+
+	boom := errors.New("API error")
+	r := resource("abc", nil)
+	r.resType = "datadog.user"
+	r.disableFn = func() error { return boom }
 
 	err := act.Execute(context.Background(), r, false)
 	if !errors.Is(err, boom) {
