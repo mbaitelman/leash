@@ -21,11 +21,11 @@ policies:
 | `datadog.slo` | Service Level Objectives | yes | yes | no |
 | `datadog.synthetic` | Synthetic API and browser tests | no | no | no |
 | `datadog.dashboard` | Dashboards | no | no | no |
-| `datadog.user` | User accounts | no | no | yes (disables) |
+| `datadog.user` | User accounts | no | no | no |
 | `datadog.rum_application` | RUM applications | no | no | no |
 | `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) | no | no | no |
 
-> **Note on deletion:** Datadog does not support hard-deleting user accounts via API. The `delete` action on `datadog.user` calls `DisableUser`, not a destructive delete. The `Taggable` / `Tag-removable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
+> **Note on deletion:** Datadog does not support hard-deleting user accounts via API, so `datadog.user` is not `Deletable`. Instead it supports the resource-scoped `user.disable` action, which calls Datadog's `DisableUser` API. The `Taggable` / `Tag-removable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
 
 ---
 
@@ -242,7 +242,7 @@ filters:
 
 Actions are executed in declaration order on every matched resource. Each action records a result (success/failure, dry-run flag) in the `actions_taken` array of the findings report.
 
-All mutating actions (`tag`, `delete`, `notify`) respect `--dry-run`: in dry-run mode they log what they would do but make no API calls or HTTP requests.
+All mutating actions (`tag`, `delete`, `user.disable`, `notify`) respect `--dry-run`: in dry-run mode they log what they would do but make no API calls or HTTP requests.
 
 ---
 
@@ -337,9 +337,22 @@ Deletes or disables the matched resource. Requires two explicit opt-ins to preve
 | Resource | What happens |
 |---|---|
 | `datadog.monitor` | Hard-deletes the monitor via the Datadog API |
-| `datadog.user` | Disables the user account (`DisableUser` API) — Datadog does not support hard user deletion |
 
-Using `delete` on `datadog.slo`, `datadog.synthetic`, `datadog.dashboard`, `datadog.rum_application`, or `datadog.rum_retention_filter` records an error (not implemented).
+Using `delete` on `datadog.slo`, `datadog.synthetic`, `datadog.dashboard`, `datadog.user`, `datadog.rum_application`, or `datadog.rum_retention_filter` records an error (not implemented). For `datadog.user`, use `user.disable` instead — Datadog does not support hard user deletion.
+
+---
+
+### `user.disable`
+
+A resource-scoped action, valid only for `datadog.user`. Disables the matched user account via Datadog's `DisableUser` API. Requires the same two explicit opt-ins as `delete`.
+
+```yaml
+- type: user.disable
+  confirm: true       # Must be present in the YAML
+  # AND: leash run --dry-run=false must be passed on the CLI
+```
+
+Using `user.disable` on any resource type other than `datadog.user` records an error (not valid for that resource type).
 
 ---
 
@@ -569,6 +582,6 @@ policies:
         value: "30d"
     actions:
       - type: report
-      - type: delete
+      - type: user.disable
         confirm: true
 ```

@@ -169,7 +169,7 @@ Add a validation step to your PR pipeline — it requires no secrets and runs in
 `--dry-run=true` (the default) is Leash's primary safety mechanism. In dry-run mode:
 
 - All **read** operations run normally (resources are fetched, filters are evaluated).
-- All **mutating** actions (`tag`, `delete`) log their intended operation but do not call any write API.
+- All **mutating** actions (`tag`, `delete`, `user.disable`) log their intended operation but do not call any write API.
 - The `notify` action logs the message to stderr instead of sending it.
 - The `report` action always runs regardless of dry-run state.
 - The findings JSON still includes `actions_taken` entries, all with `"dry_run": true`.
@@ -340,3 +340,4 @@ func TestYourTypeResource_Properties(t *testing.T) {
 | `age filter 'op' must be 'older-than' or 'newer-than'` | Invalid op | Check spelling |
 | `tag action requires 'tags'` | Missing `tags:` list on tag action | Add a `tags:` list with at least one entry |
 | `delete action: 'confirm: true' must be set` | Forgot to add `confirm: true` | Add `confirm: true` under the delete action |
+| `user.disable action: 'confirm: true' must be set` | Forgot to add `confirm: true` | Add `confirm: true` under the user.disable action |

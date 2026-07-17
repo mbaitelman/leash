@@ -47,7 +47,7 @@ After you have keys, see [pup.md](pup.md) for using Datadog's official CLI to ve
 | `synthetics_read` | `datadog.synthetic` resource |
 | `dashboards_read` | `datadog.dashboard` resource |
 | `user_access_read` | `datadog.user` resource |
-| `user_access_manage` | `delete` (disable) action on users |
+| `user_access_manage` | `user.disable` action on users |
 | `rum_read` | `datadog.rum_application` and `datadog.rum_retention_filter` resources |
 
 **Principle of least privilege:** If you only run `report` and `notify` actions, you need only the `*_read` permissions. Grant write permissions only when you enable `--dry-run=false` with mutating actions.

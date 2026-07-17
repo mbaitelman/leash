@@ -118,7 +118,7 @@ DD_API_KEY=<org-key> DD_APP_KEY=<org-key> DD_ORG=staging \
 | `synthetics_read` | `datadog.synthetic` resource |
 | `dashboards_read` | `datadog.dashboard` resource |
 | `user_access_read` | `datadog.user` resource |
-| `user_access_manage` | `delete` (disable) action on users |
+| `user_access_manage` | `user.disable` action on users |
 
 **Minimum read-only set** (dry-run / report-only policies):
 ```
