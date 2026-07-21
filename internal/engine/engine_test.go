@@ -35,6 +35,25 @@ func registerFakeProvider(resources []resource.Resource) {
 	resource.Register(&fakeProvider{resources: resources})
 }
 
+// fakeParamProvider is a resource.ParameterizedProvider that records the
+// params it receives.
+type fakeParamProvider struct {
+	resources    []resource.Resource
+	gotParams    map[string]any
+	calledParams bool
+}
+
+func (p *fakeParamProvider) ResourceType() string { return "fake.params" }
+func (p *fakeParamProvider) List(_ context.Context, _ *datadog.APIClient) ([]resource.Resource, error) {
+	return p.resources, nil
+}
+func (p *fakeParamProvider) ListWithParams(_ context.Context, _ *datadog.APIClient, params map[string]any) ([]resource.Resource, error) {
+	p.calledParams = true
+	p.gotParams = params
+	return p.resources, nil
+}
+func (p *fakeParamProvider) ValidateParams(map[string]any) error { return nil }
+
 func TestEngine_Run_AllMatch(t *testing.T) {
 	registerFakeProvider([]resource.Resource{
 		&fakeRes{id: "a", props: map[string]any{"env": "prod"}},
@@ -176,6 +195,48 @@ func TestEngine_Run_UnknownResourceType(t *testing.T) {
 	_, err := e.Run(policies, true)
 	if err == nil {
 		t.Error("expected error for unknown resource type")
+	}
+}
+
+func TestEngine_Run_ParamsPassedToProvider(t *testing.T) {
+	fp := &fakeParamProvider{resources: []resource.Resource{
+		&fakeRes{id: "e1", props: map[string]any{}},
+	}}
+	resource.Register(fp)
+
+	e := engine.New(context.Background(), nil)
+	params := map[string]any{"query": "@evt.name:Dashboard", "lookback": "24h"}
+	policies := []policy.Policy{
+		{Name: "with-params", Resource: "fake.params", Params: params},
+	}
+
+	report, err := e.Run(policies, true)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !fp.calledParams {
+		t.Fatal("expected ListWithParams to be called")
+	}
+	if fp.gotParams["query"] != "@evt.name:Dashboard" {
+		t.Errorf("params not passed through: got %v", fp.gotParams)
+	}
+	if report.Policies[0].MatchCount != 1 {
+		t.Errorf("match_count: got %d, want 1", report.Policies[0].MatchCount)
+	}
+}
+
+func TestEngine_Run_ParamsRejectedByPlainProvider(t *testing.T) {
+	registerFakeProvider([]resource.Resource{
+		&fakeRes{id: "a", props: map[string]any{}},
+	})
+
+	e := engine.New(context.Background(), nil)
+	policies := []policy.Policy{
+		{Name: "bad-params", Resource: "fake.engine", Params: map[string]any{"lookback": "24h"}},
+	}
+	_, err := e.Run(policies, true)
+	if err == nil {
+		t.Error("expected error for params on a non-parameterized provider")
 	}
 }
 

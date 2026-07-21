@@ -53,7 +53,7 @@ func (e *Engine) runPolicy(pol policy.Policy, dryRun bool) (*output.PolicyResult
 		return nil, err
 	}
 
-	resources, err := provider.List(e.ctx, e.client)
+	resources, err := listResources(e.ctx, e.client, provider, pol)
 	if err != nil {
 		return nil, fmt.Errorf("listing %s: %w", pol.Resource, err)
 	}
@@ -124,6 +124,16 @@ func (e *Engine) runPolicy(pol policy.Policy, dryRun bool) (*output.PolicyResult
 	result.MatchCount = len(result.Matches)
 	result.PassCount = len(result.Passing)
 	return result, nil
+}
+
+func listResources(ctx context.Context, client *datadog.APIClient, p resource.Provider, pol policy.Policy) ([]resource.Resource, error) {
+	if pp, ok := p.(resource.ParameterizedProvider); ok {
+		return pp.ListWithParams(ctx, client, pol.Params)
+	}
+	if len(pol.Params) > 0 {
+		return nil, fmt.Errorf("resource type %q does not accept 'params'", pol.Resource)
+	}
+	return p.List(ctx, client)
 }
 
 func applyFilters(r resource.Resource, filters []filter.Filter) (bool, error) {

@@ -1,0 +1,15 @@
+policies:
+  - name: dashboard-deletes-by-non-admins
+    description: Dashboards deleted in the last day by users outside the platform team
+    resource: datadog.audit_event
+    params:
+      query: "@evt.name:Dashboard @action:deleted"
+      lookback: 24h
+      max_events: 500
+    filters:
+      - type: value
+        key: attributes.usr.email
+        op: not-regex
+        value: ".*@platform-team\\.example\\.com$"
+    actions:
+      - type: report

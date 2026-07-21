@@ -166,3 +166,30 @@ policies:
 		t.Fatalf("expected 2 policies, got %d", len(policies))
 	}
 }
+
+func TestLoadPaths_ParamsRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	path := writeFile(t, dir, "params.yaml", `
+policies:
+  - name: audit-policy
+    resource: datadog.audit_event
+    params:
+      query: "@evt.name:Dashboard"
+      lookback: 24h
+      max_events: 500
+`)
+	policies, err := policy.LoadPaths([]string{path})
+	if err != nil {
+		t.Fatalf("LoadPaths: %v", err)
+	}
+	params := policies[0].Params
+	if params["query"] != "@evt.name:Dashboard" {
+		t.Errorf("query: got %v", params["query"])
+	}
+	if params["lookback"] != "24h" {
+		t.Errorf("lookback: got %v", params["lookback"])
+	}
+	if params["max_events"] != 500 {
+		t.Errorf("max_events: got %v (%T)", params["max_events"], params["max_events"])
+	}
+}

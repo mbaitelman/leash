@@ -7,6 +7,7 @@ policies:
   - name: string           # required — unique identifier used in reports
     description: string    # optional — shown in the UI and findings output
     resource: string       # required — see Resource types
+    params: {}             # optional — provider-specific parameters (see Provider parameters)
     filters: []            # optional — all filters AND-ed; no filters = match everything
     actions: []            # optional — executed in order on each matched resource
 ```
@@ -24,8 +25,37 @@ policies:
 | `datadog.user` | User accounts | no | no | yes (disables) |
 | `datadog.rum_application` | RUM applications | no | no | no |
 | `datadog.rum_retention_filter` | RUM retention filters (one resource per filter per app) | no | no | no |
+| `datadog.audit_event` | Audit Trail events (windowed search) | no | no | no |
 
 > **Note on deletion:** Datadog does not support hard-deleting user accounts via API. The `delete` action on `datadog.user` calls `DisableUser`, not a destructive delete. The `Taggable` / `Tag-removable` / `Deletable` columns determine which actions are available — using `tag` or `delete` on a resource type that doesn't support it produces a runtime error recorded in the action log.
+
+---
+
+## Provider parameters (`params`)
+
+Some resource types accept per-policy parameters via an optional `params` block. Using `params` on a resource type that doesn't accept them is a validation error.
+
+Currently only `datadog.audit_event` accepts parameters:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `query` | string | — | Server-side [Audit Logs search query](https://docs.datadoghq.com/account_management/audit_trail/) applied by the Datadog API before events are fetched, e.g. `"@evt.name:Dashboard @action:deleted"` |
+| `lookback` | duration string | `24h` | Search window ending at `to`. Supports Go durations plus `d` for days (`24h`, `7d`). Mutually exclusive with `from` |
+| `from` | string | — | Window start: RFC3339 timestamp or Datadog date math (`now-24h`) |
+| `to` | string | `now` | Window end: RFC3339 timestamp or Datadog date math |
+| `max_events` | int | `1000` | Hard cap on the number of events fetched per run |
+
+```yaml
+policies:
+  - name: audit-example
+    resource: datadog.audit_event
+    params:
+      query: "@evt.name:Dashboard @action:deleted"
+      lookback: 24h
+      max_events: 500
+```
+
+`leash validate` checks `params` offline — unknown keys, bad durations, and conflicting `lookback`/`from` are rejected without API calls.
 
 ---
 
@@ -339,7 +369,7 @@ Deletes or disables the matched resource. Requires two explicit opt-ins to preve
 | `datadog.monitor` | Hard-deletes the monitor via the Datadog API |
 | `datadog.user` | Disables the user account (`DisableUser` API) — Datadog does not support hard user deletion |
 
-Using `delete` on `datadog.slo`, `datadog.synthetic`, `datadog.dashboard`, `datadog.rum_application`, or `datadog.rum_retention_filter` records an error (not implemented).
+Using `delete` on `datadog.slo`, `datadog.synthetic`, `datadog.dashboard`, `datadog.rum_application`, `datadog.rum_retention_filter`, or `datadog.audit_event` records an error (not implemented).
 
 ---
 
@@ -456,6 +486,23 @@ Each retention filter for a RUM application is a separate resource. Use `app_id`
 | `event_type` | string | `session`, `view`, `action`, `error`, `resource`, or `long_task` |
 | `query` | string | RUM search query scoping this filter |
 | `sample_rate` | float64 | Sampling rate (0.1–100) |
+
+### `datadog.audit_event`
+
+One resource per Audit Trail event in the search window (see [Provider parameters](#provider-parameters-params)). Events are immutable — `tag` and `delete` record errors; use `report` and `notify`.
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | string | Unique event ID |
+| `message` | string | Event message |
+| `service` | string | Application or service that generated the event |
+| `tags` | []string | Event tags |
+| `timestamp` | time.Time | Event timestamp (works with the `age` filter) |
+| `attributes.*` | any | All event attributes, dot-flattened dynamically |
+
+The `attributes.*` keys mirror the Audit Trail facets with the `@` prefix replaced by `attributes.`: `@evt.name` becomes `attributes.evt.name`, `@usr.email` becomes `attributes.usr.email`, `@action` becomes `attributes.action`, and so on. Available keys vary by event type.
+
+> **Scheduled runs:** each run re-fetches the window independently — there is no deduplication across runs. Set `lookback` to at least the `serve --schedule` interval to avoid gaps, and expect `notify` to fire again for events that appear in overlapping windows.
 
 ---
 

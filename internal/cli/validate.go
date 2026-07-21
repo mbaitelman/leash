@@ -46,8 +46,17 @@ Exits with code 0 on success, non-zero if any policy is invalid.`,
 }
 
 func validatePolicy(pol policy.Policy) error {
-	if _, err := resource.Get(pol.Resource); err != nil {
+	provider, err := resource.Get(pol.Resource)
+	if err != nil {
 		return err
+	}
+
+	if pp, ok := provider.(resource.ParameterizedProvider); ok {
+		if err := pp.ValidateParams(pol.Params); err != nil {
+			return fmt.Errorf("params: %w", err)
+		}
+	} else if len(pol.Params) > 0 {
+		return fmt.Errorf("resource type %q does not accept 'params'", pol.Resource)
 	}
 
 	for _, spec := range pol.Filters {
