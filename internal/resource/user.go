@@ -99,8 +99,8 @@ func (r *userResource) Properties() map[string]any {
 	return props
 }
 
-// Disable disables the user (Datadog does not hard-delete users).
-func (r *userResource) Delete(ctx context.Context) error {
+// Disable disables the user via Datadog's "Disable a user" API (Datadog does not hard-delete users).
+func (r *userResource) Disable(ctx context.Context) error {
 	api := datadogV2.NewUsersApi(r.client)
 	_, err := api.DisableUser(ctx, r.inner.GetId())
 	return err

@@ -49,7 +49,7 @@ policies:
 2. Run `leash run` — Leash queries the Datadog API, applies your filters, and executes the actions.
 3. Findings are emitted as structured JSON, ready for dashboards or alerting pipelines.
 
-By default every run is a **dry run** — mutating actions (tag, delete) are logged but not executed unless you opt in with `--dry-run=false`.
+By default every run is a **dry run** — mutating actions (tag, delete, user.disable) are logged but not executed unless you opt in with `--dry-run=false`.
 
 ---
 
@@ -192,6 +192,7 @@ filters:
 | `notify` | No | POST a message to a Slack webhook |
 | `tag` | Yes | Add tags to matched resources; optionally remove them from passing resources (`remove_on_pass: true`) |
 | `delete` | Yes | Delete the resource (requires `confirm: true` in YAML) |
+| `user.disable` | Yes | Disable a Datadog user account (`datadog.user` only; requires `confirm: true` in YAML) |
 
 **report:**
 ```yaml
@@ -218,6 +219,13 @@ filters:
 **delete** (requires two explicit opt-ins):
 ```yaml
 - type: delete
+  confirm: true    # Must be in the YAML
+  # AND --dry-run=false must be passed on the CLI
+```
+
+**user.disable** (resource-scoped to `datadog.user`; requires two explicit opt-ins):
+```yaml
+- type: user.disable
   confirm: true    # Must be in the YAML
   # AND --dry-run=false must be passed on the CLI
 ```
